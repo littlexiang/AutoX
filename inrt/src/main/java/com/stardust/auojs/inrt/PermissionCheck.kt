@@ -156,6 +156,21 @@ class PermissionCheck : DialogController() {
                                 activityResultLauncher.launch(intent)
                             }
                         }
+
+                        Constant.Permissions.USB_DEBUG -> {
+                            val intent = Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
+                            val activityResultLauncher =
+                                rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+                                    enabled = checkPermission(context, e.key)
+                                }
+                            Item(
+                                modifier,
+                                stringResource(R.string.text_open_usb_debug),
+                                enabled
+                            ) {
+                                activityResultLauncher.launch(intent)
+                            }
+                        }
                     }
                 }
             }
@@ -239,6 +254,14 @@ class PermissionCheck : DialogController() {
 
             Constant.Permissions.PUBLISH_NOTIFICATION -> {
                 NotificationManagerCompat.from(context).areNotificationsEnabled()
+            }
+
+            Constant.Permissions.USB_DEBUG -> {
+                try {
+                    Settings.Global.getInt(context.contentResolver, Settings.Global.ADB_ENABLED, 0) == 1
+                } catch (_: Exception) {
+                    false
+                }
             }
 
             else -> false

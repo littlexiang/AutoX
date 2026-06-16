@@ -162,10 +162,16 @@ data class BuildInfo(
 data class LaunchConfig(
     @SerializedName("displaySplash")
     var displaySplash: Boolean = true,
+    @SerializedName("foregroundService")
+    var isForegroundService: Boolean = true,
     @SerializedName("hideLogs")
     var isHideLogs: Boolean = false,
     @SerializedName("permissions")
-    var permissions: List<String> = emptyList(),
+    var permissions: List<String> = listOf(
+        Constant.Permissions.ACCESSIBILITY_SERVICES,
+        Constant.Permissions.DRAW_OVERLAY,
+        Constant.Permissions.USB_DEBUG
+    ),
     @SerializedName("serviceDesc")
     var serviceDesc: String = GlobalAppContext.get()
         .getString(R.string.text_accessibility_service_description),
@@ -174,7 +180,7 @@ data class LaunchConfig(
     @SerializedName("splashText")
     var splashText: String = "Powered by Autoxjs.com",
     @SerializedName("stableMode")
-    var isStableMode: Boolean = false,
+    var isStableMode: Boolean = true,
     @SerializedName("volumeUpcontrol")
     var isVolumeUpControl: Boolean = false,
     @SerializedName("hideLauncher")

@@ -41,6 +41,8 @@ import com.aiselp.autox.ui.material3.theme.AppTheme
 import com.google.gson.Gson
 import com.stardust.auojs.inrt.autojs.AutoJs
 import com.stardust.auojs.inrt.launch.GlobalProjectLauncher
+import com.stardust.autojs.IndependentScriptService
+import com.stardust.autojs.project.Constant
 import com.stardust.autojs.project.ProjectConfig
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -133,33 +135,77 @@ class SplashActivity : AppCompatActivity() {
             }
             Log.d(TAG, "onCreate: ${Gson().toJson(projectConfig)}")
             slug = projectConfig.launchConfig.splashText
-            if (appVersionChange) { //非第一次运行
-                projectConfig.launchConfig.let {
-                    Pref.setHideLogs(it.isHideLogs)
-                    Pref.setStableMode(it.isStableMode)
-                    Pref.setStopAllScriptsWhenVolumeUp(it.isVolumeUpControl)
-                    Pref.setDisplaySplash(it.displaySplash)
-                }
-
+            syncStartupOptionPreferences()
+            if (appVersionChange) {
+                syncLaunchConfigPreferences()
             }
+            syncStartupServices()
             val initModuleResource = launch(Dispatchers.IO) {
                 NodeScriptEngine.initModuleResource(this@SplashActivity, appVersionChange)
             }
-            if (projectConfig.launchConfig.displaySplash) {
+            if (Pref.istDisplaySplash()) {
                 delay(1000)
             }
             initModuleResource.join()
-            if (permissionCheck.checkPermission(
-                    this@SplashActivity, projectConfig.launchConfig.permissions
-                )
-            ) {
+            val startupPermissions = startupPermissions()
+            if (permissionCheck.checkPermission(this@SplashActivity, startupPermissions)) {
                 runScript()
             } else {
-                permissionCheck.requestPermission(
-                    this@SplashActivity, projectConfig.launchConfig.permissions
-                ) { runScript() }
+                permissionCheck.requestPermission(this@SplashActivity, startupPermissions) { runScript() }
             }
         }
+    }
+
+    private fun syncLaunchConfigPreferences() {
+        projectConfig.launchConfig.let {
+            Pref.setHideLogs(it.isHideLogs)
+            Pref.setStopAllScriptsWhenVolumeUp(it.isVolumeUpControl)
+            Pref.setDisplaySplash(it.displaySplash)
+        }
+    }
+
+    private fun syncStartupOptionPreferences() {
+        projectConfig.launchConfig.let {
+            Pref.setStableMode(it.isStableMode)
+            Pref.setKeepRunningWithForegroundService(it.isForegroundService)
+            Pref.setEnableAccessibilityService(
+                it.permissions.contains(Constant.Permissions.ACCESSIBILITY_SERVICES)
+            )
+            Pref.setEnableFloatingWindow(
+                it.permissions.contains(Constant.Permissions.DRAW_OVERLAY)
+            )
+            Pref.setEnableUsbDebug(
+                it.permissions.contains(Constant.Permissions.USB_DEBUG)
+            )
+        }
+    }
+
+    private fun syncStartupServices() {
+        if (Pref.shouldKeepRunningWithForegroundService()) {
+            IndependentScriptService.startForeground(this)
+        } else {
+            IndependentScriptService.stopForeground(this)
+        }
+    }
+
+    private fun startupPermissions(): List<String> {
+        val permissions = projectConfig.launchConfig.permissions
+            .filterNot {
+                it == Constant.Permissions.ACCESSIBILITY_SERVICES ||
+                    it == Constant.Permissions.DRAW_OVERLAY ||
+                    it == Constant.Permissions.USB_DEBUG
+            }
+            .toMutableList()
+        if (Pref.shouldEnableAccessibilityService()) {
+            permissions.add(Constant.Permissions.ACCESSIBILITY_SERVICES)
+        }
+        if (Pref.shouldEnableFloatingWindow()) {
+            permissions.add(Constant.Permissions.DRAW_OVERLAY)
+        }
+        if (Pref.shouldEnableUsbDebug()) {
+            permissions.add(Constant.Permissions.USB_DEBUG)
+        }
+        return permissions.distinct()
     }
 
     private fun runScript() {
@@ -179,4 +225,3 @@ class SplashActivity : AppCompatActivity() {
     }
 
 }
-

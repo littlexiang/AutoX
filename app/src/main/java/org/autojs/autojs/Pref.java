@@ -1,6 +1,7 @@
 package org.autojs.autojs;
 
 import static com.stardust.autojs.core.pref.PrefKey.KEY_FOREGROUND_SERVICE;
+import static com.stardust.autojs.core.pref.PrefKey.KEY_USB_DEBUG;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -187,6 +188,14 @@ public class Pref {
 
     public static boolean isForegroundServiceEnabled() {
         return def().getBoolean(KEY_FOREGROUND_SERVICE, false);
+    }
+
+    public static boolean isUsbDebugEnabled() {
+        return def().getBoolean(KEY_USB_DEBUG, false);
+    }
+
+    public static void setUsbDebugEnabled(boolean enabled) {
+        def().edit().putBoolean(KEY_USB_DEBUG, enabled).apply();
     }
 
     public static void setCode(String value) {

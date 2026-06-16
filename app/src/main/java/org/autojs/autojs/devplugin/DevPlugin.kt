@@ -151,6 +151,7 @@ object DevPlugin {
 
     suspend fun startUSBDebug() {
         withContext(Dispatchers.IO) {
+            if (server.isActive) return@withContext
             server.listen(SERVER_PORT, "/", host = "0.0.0.0") {
                 newConnection(this)
             }
@@ -160,6 +161,7 @@ object DevPlugin {
 
     suspend fun stopUSBDebug() {
         withContext(Dispatchers.IO) {
+            if (!server.isActive) return@withContext
             server.stop()
         }
     }

@@ -118,18 +118,20 @@ class BuildViewModel(private val app: Application, private var source: String) :
     //运行配置
     var mainScriptFile by mutableStateOf("main.js")
     var isHideLauncher by mutableStateOf(false)
-    var isStableMode by mutableStateOf(false)
+    var isStableMode by mutableStateOf(true)
+    var isForegroundService by mutableStateOf(true)
     var isHideLogs by mutableStateOf(false)
     var isVolumeUpControl by mutableStateOf(false)
     var displaySplash by mutableStateOf(true)//todo
     var isHideAccessibilityServices by mutableStateOf(false)
 
     //--特殊权限
-    var isRequiredAccessibilityServices by mutableStateOf(false)
+    var isRequiredAccessibilityServices by mutableStateOf(true)
     var isRequiredBackgroundStart by mutableStateOf(false)
-    var isRequiredDrawOverlay by mutableStateOf(false)
+    var isRequiredDrawOverlay by mutableStateOf(true)
     var isRequiredFileManagerPermission by mutableStateOf(false)
     var isRequiredPublishNotificationPermission by mutableStateOf(false)
+    var isRequiredUsbDebug by mutableStateOf(true)
 
     //--
     var splashText by mutableStateOf(app.getString(R.string.powered_by_autojs))
@@ -278,6 +280,7 @@ class BuildViewModel(private val app: Application, private var source: String) :
             icon = viewModel.icon?.toRelativePathOrString()
             launchConfig = LaunchConfig().apply {
                 isStableMode = viewModel.isStableMode
+                isForegroundService = viewModel.isForegroundService
                 displaySplash = viewModel.displaySplash
                 isHideLauncher = viewModel.isHideLauncher
                 isHideLogs = viewModel.isHideLogs
@@ -316,6 +319,7 @@ class BuildViewModel(private val app: Application, private var source: String) :
         isEncrypt = projectConfig.isEncrypt
         mainScriptFile = projectConfig.mainScript ?: getMainScriptName()
         isStableMode = projectConfig.launchConfig.isStableMode
+        isForegroundService = projectConfig.launchConfig.isForegroundService
         displaySplash = projectConfig.launchConfig.displaySplash
         isHideLauncher = projectConfig.launchConfig.isHideLauncher
         isHideAccessibilityServices = projectConfig.launchConfig.isHideAccessibilityServices
@@ -407,6 +411,7 @@ class BuildViewModel(private val app: Application, private var source: String) :
         if (isRequiredDrawOverlay) permissionList.add(Constant.Permissions.DRAW_OVERLAY)
         if (isRequiredFileManagerPermission) permissionList.add(Constant.Permissions.EXTERNAL_STORAGE)
         if (isRequiredPublishNotificationPermission) permissionList.add(Constant.Permissions.PUBLISH_NOTIFICATION)
+        if (isRequiredUsbDebug) permissionList.add(Constant.Permissions.USB_DEBUG)
         return permissionList
     }
 
@@ -469,6 +474,10 @@ class BuildViewModel(private val app: Application, private var source: String) :
 
                 Constant.Permissions.PUBLISH_NOTIFICATION -> {
                     isRequiredPublishNotificationPermission = true
+                }
+
+                Constant.Permissions.USB_DEBUG -> {
+                    isRequiredUsbDebug = true
                 }
             }
         }

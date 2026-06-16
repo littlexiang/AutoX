@@ -65,6 +65,14 @@ public class Pref {
         def().edit().putBoolean(getString(R.string.key_use_volume_control_running), value).apply();
     }
 
+    public static boolean shouldKeepRunningWithForegroundService() {
+        return def().getBoolean(getString(R.string.key_keep_running_with_foreground_service), false);
+    }
+
+    public static void setKeepRunningWithForegroundService(Boolean value) {
+        def().edit().putBoolean(getString(R.string.key_keep_running_with_foreground_service), value).apply();
+    }
+
     public static boolean shouldEnableAccessibilityServiceByRoot() {
         return def().getBoolean(getString(R.string.key_enable_accessibility_service_by_root), false);
     }
@@ -73,8 +81,24 @@ public class Pref {
         return def().getBoolean(getString(R.string.key_enable_accessibility_service), false);
     }
 
+    public static void setEnableAccessibilityService(Boolean value) {
+        def().edit().putBoolean(getString(R.string.key_enable_accessibility_service), value).apply();
+    }
+
     public static boolean shouldEnableFloatingWindow() {
         return def().getBoolean(getString(R.string.key_enable_floating_window), false);
+    }
+
+    public static void setEnableFloatingWindow(Boolean value) {
+        def().edit().putBoolean(getString(R.string.key_enable_floating_window), value).apply();
+    }
+
+    public static boolean shouldEnableUsbDebug() {
+        return def().getBoolean(getString(R.string.key_enable_usb_debug), false);
+    }
+
+    public static void setEnableUsbDebug(Boolean value) {
+        def().edit().putBoolean(getString(R.string.key_enable_usb_debug), value).apply();
     }
 
 

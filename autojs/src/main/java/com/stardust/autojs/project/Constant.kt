@@ -44,6 +44,7 @@ object Constant {
         const val DRAW_OVERLAY = "draw_overlay"
         const val EXTERNAL_STORAGE = "external_storage"
         const val PUBLISH_NOTIFICATION = "publish_notification"
+        const val USB_DEBUG = "usb_debug"
     }
 
     object Protocol {

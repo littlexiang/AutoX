@@ -87,6 +87,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.autojs.autojs.Pref
 import org.autojs.autojs.devplugin.DevPlugin
+import org.autojs.autojs.devplugin.UsbDebugService
 import org.autojs.autojs.tool.AccessibilityServiceTool
 import org.autojs.autojs.tool.WifiTool
 import org.autojs.autojs.ui.floating.FloatyWindowManger
@@ -588,7 +589,7 @@ private fun DialogController.ConnectComputerDialog(
 fun USBDebugSwitch() {
     val context = LocalContext.current
     var enable by remember {
-        mutableStateOf(DevPlugin.isUSBDebugServiceActive)
+        mutableStateOf(Pref.isUsbDebugEnabled() || DevPlugin.isUSBDebugServiceActive)
     }
     val scope = rememberCoroutineScope()
     SettingOptionSwitch(
@@ -605,9 +606,11 @@ fun USBDebugSwitch() {
             scope.launch {
                 if (it) {
                     try {
-                        DevPlugin.startUSBDebug()
+                        Pref.setUsbDebugEnabled(true)
+                        UsbDebugService.start(context)
                         enable = true
                     } catch (e: Exception) {
+                        Pref.setUsbDebugEnabled(false)
                         enable = false
                         e.printStackTrace()
                         context.getString(
@@ -616,7 +619,8 @@ fun USBDebugSwitch() {
                         ).toast(context)
                     }
                 } else {
-                    DevPlugin.stopUSBDebug()
+                    Pref.setUsbDebugEnabled(false)
+                    UsbDebugService.stop(context)
                     enable = false
                 }
             }

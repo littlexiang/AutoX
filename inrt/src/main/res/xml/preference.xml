@@ -49,6 +49,11 @@
             android:key="@string/key_stable_mode"
             android:summary="@string/summary_stable_mode"
             android:title="@string/text_stable_mode"/>
+        <SwitchPreference
+            android:defaultValue="false"
+            android:key="@string/key_enable_usb_debug"
+            android:summary="@string/summary_enable_usb_debug"
+            android:title="@string/text_open_usb_debug"/>
     </androidx.preference.PreferenceCategory>
 
 </androidx.preference.PreferenceScreen>

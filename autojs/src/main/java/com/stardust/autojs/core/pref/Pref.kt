@@ -41,6 +41,7 @@ object PrefKey {
     const val KEY_GESTURE_OBSERVING = "key_gesture_observing"
     const val KEY_AUTO_BACKUP = "key_auto_backup"
     const val KEY_FOREGROUND_SERVICE = "key_foreground_service"
+    const val KEY_USB_DEBUG = "key_usb_debug"
     const val KEY_USE_VOLUME_CONTROL_RECORD = "key_use_volume_control_record"
     const val KEY_LANGUAGE = "key_language"
 }

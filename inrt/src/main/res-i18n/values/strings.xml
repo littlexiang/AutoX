@@ -5,6 +5,7 @@
     <string name="key_enable_accessibility_service_by_root" translatable="false">key_enable_accessibility_service_by_root</string>
     <string name="key_enable_accessibility_service" translatable="false">key_enable_accessibility_service</string>
     <string name="key_enable_floating_window" translatable="false">key_enable_floating_window</string>
+    <string name="key_enable_usb_debug" translatable="false">key_enable_usb_debug</string>
     <string name="key_stable_mode" translatable="false">key_stable_mode</string>
     <string name="powered_by_autojs" translatable="false">Powered by Autoxjs.com</string>
     <string name="title_activity_login" translatable="false">LoginActivity</string>
@@ -17,6 +18,7 @@
     <string name="text_settings">设置</string>
     <string name="text_script_running">脚本运行</string>
     <string name="text_keep_running_with_foreground_service">使用前台服务使应用保持运行</string>
+    <string name="text_open_usb_debug">USB调试</string>
     <string name="text_use_accessibility_service">无障碍服务</string>
     <string name="text_use_floating_window">悬浮窗</string>
     <string name="summary_enable_accessibility_service">必须要开启无障碍服务任务才能执行(保留项)</string>
@@ -25,6 +27,7 @@
     <string name="summary_enable_accessibility_service_by_root">开启后运行脚本会使用Root权限自动开启无障碍服务(保留项)</string>
     <string name="text_enable_accessibility_service_by_root">使用Root权限自动启用服务</string>
     <string name="summary_stable_mode">开启后布局分析更稳定，但小部分脚本可能无法正常运行。重启无障碍服务生效</string>
+    <string name="summary_enable_usb_debug">需要开启USB调试才能进行连接调试(保留项)</string>
     <string name="text_stable_mode">稳定模式</string>
     <string name="text_accessibility_service">无障碍服务</string>
     <string name="text_dont_show_main_activity">不显示主界面</string>

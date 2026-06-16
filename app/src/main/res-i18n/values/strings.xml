@@ -426,6 +426,9 @@
     <string name="text_invalid_project_config">没有配置文件</string>
     <string name="text_foreground_service">前台服务</string>
     <string name="foreground_notification_channel_name">前台服务通知</string>
+    <string name="usb_debug_notification_title">USB调试服务运行中</string>
+    <string name="usb_debug_notification_text">保持电脑调试连接可用</string>
+    <string name="usb_debug_notification_channel_name">USB调试服务</string>
     <string name="foreground_notification_title">Autox.js保持运行中</string>
     <string name="foreground_notification_text">点击进入主界面</string>
     <string name="text_run_on_other_broadcast">其他事件(广播)</string>
@@ -554,6 +557,8 @@
     <string name="text_sign_plan">签名方案</string>
     <string name="text_copy_successfully">复制成功</string>
     <string name="text_copy_link">复制链接</string>
+    <string name="startup_auto_open_options">启动时自动打开选项</string>
+    <string name="startup_auto_open_options_desc">勾选后，打包的 app 启动时会自动应用或引导开启这些选项</string>
     <string name="import_template_apk_desc">当前版本不包含模板apk资源，请前往下载（template.apk）并导入</string>
     <string name="special_permissions_configuration">特殊权限配置</string>
     <string name="special_permissions_configuration_desc">勾选以下权限要求会让打包的app启动时向用户申请并取得权限后才能运行</string>

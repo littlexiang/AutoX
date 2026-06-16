@@ -111,6 +111,7 @@ fun BuildPage(viewModel: BuildViewModel) {
             ConfigCard(model = viewModel)
             PackagingOptionCard(model = viewModel)
             RunConfigCard(model = viewModel)
+            StartupOptionsCard(model = viewModel)
             SpecialPermissionsCard(model = viewModel)
             EncryptCard(model = viewModel)
             SignatureCard(model = viewModel)
@@ -315,7 +316,6 @@ private fun RunConfigCard(model: BuildViewModel) {
         Spacer(modifier = Modifier.height(8.dp))
         for ((t, v) in mapOf(
             stringResource(id = R.string.text_hideLaucher) to model::isHideLauncher,
-            stringResource(id = R.string.text_stable_mode) to model::isStableMode,
             stringResource(id = R.string.text_hideLogs) to model::isHideLogs,
             stringResource(id = R.string.text_volumeUpcontrol) to model::isVolumeUpControl,
             stringResource(id = R.string.text_hide_accessibility_services) to model::isHideAccessibilityServices,
@@ -359,21 +359,41 @@ private fun RunConfigCard(model: BuildViewModel) {
 }
 
 @Composable
-fun SpecialPermissionsCard(model: BuildViewModel) {
-    BuildCard(stringResource(R.string.special_permissions_configuration)) {
-        Text(stringResource(R.string.special_permissions_configuration_desc))
+fun StartupOptionsCard(model: BuildViewModel) {
+    BuildCard(stringResource(R.string.startup_auto_open_options)) {
+        Text(stringResource(R.string.startup_auto_open_options_desc))
         Spacer(modifier = Modifier.height(8.dp))
         CheckboxOption(
             model::isRequiredAccessibilityServices,
             stringResource(id = R.string.accessibility_service)
         )
         CheckboxOption(
-            model::isRequiredBackgroundStart,
-            stringResource(id = R.string.background_window_permission)
+            model::isStableMode,
+            stringResource(id = R.string.text_stable_mode)
+        )
+        CheckboxOption(
+            model::isForegroundService,
+            stringResource(id = R.string.text_foreground_service)
         )
         CheckboxOption(
             model::isRequiredDrawOverlay,
-            stringResource(id = R.string.draw_overlay_permission)
+            stringResource(id = R.string.text_floating_window)
+        )
+        CheckboxOption(
+            model::isRequiredUsbDebug,
+            stringResource(id = R.string.text_open_usb_debug)
+        )
+    }
+}
+
+@Composable
+fun SpecialPermissionsCard(model: BuildViewModel) {
+    BuildCard(stringResource(R.string.special_permissions_configuration)) {
+        Text(stringResource(R.string.special_permissions_configuration_desc))
+        Spacer(modifier = Modifier.height(8.dp))
+        CheckboxOption(
+            model::isRequiredBackgroundStart,
+            stringResource(id = R.string.background_window_permission)
         )
         CheckboxOption(
             model::isRequiredFileManagerPermission,

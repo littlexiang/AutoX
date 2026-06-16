@@ -25,6 +25,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.autojs.autojs.autojs.AutoJs
 import org.autojs.autojs.autojs.key.GlobalKeyObserver
+import org.autojs.autojs.devplugin.UsbDebugService
 import org.autojs.autojs.external.receiver.DynamicBroadcastReceivers
 import org.autojs.autojs.theme.ThemeColorManagerCompat
 import org.autojs.autojs.timing.TimedTaskManager
@@ -81,6 +82,9 @@ class App : Application(), Configuration.Provider {
             };
         } else if (ProcessUtils.isMainProcess(this)) {
             initResource()
+            if (Pref.isUsbDebugEnabled()) {
+                UsbDebugService.start(this)
+            }
             EngineController.scope.launch {
                 delay(1000)
                 ShizukuProvider.requestBinderForNonProviderProcess(this@App)
