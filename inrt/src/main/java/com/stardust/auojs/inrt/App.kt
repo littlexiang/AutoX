@@ -8,7 +8,6 @@ import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
 import com.aiselp.autox.ui.material3.activity.ErrorReportActivity
-import com.linsh.utilseverywhere.Utils
 import com.stardust.app.GlobalAppContext
 import com.stardust.auojs.inrt.autojs.AutoJs
 import com.stardust.auojs.inrt.autojs.GlobalKeyObserver
@@ -27,7 +26,6 @@ class App : Application() {
         GlobalAppContext.set(
             this, com.stardust.app.BuildConfig.generate(BuildConfig::class.java)
         )
-        Utils.init(this);
         AutoJs.initInstance(this)
         GlobalKeyObserver.init()
 

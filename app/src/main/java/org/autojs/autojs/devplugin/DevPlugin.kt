@@ -20,7 +20,10 @@ import io.ktor.websocket.readText
 import io.ktor.websocket.send
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ClosedReceiveChannelException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -28,7 +31,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okio.ByteString.Companion.toByteString
 import org.autojs.autojs.devplugin.message.Hello
@@ -39,6 +41,7 @@ import org.autojs.autoxjs.BuildConfig
 import org.autojs.autoxjs.R
 import java.io.File
 import java.net.SocketTimeoutException
+import java.util.concurrent.atomic.AtomicBoolean
 
 object DevPlugin {
 
@@ -168,6 +171,9 @@ object DevPlugin {
         private var serverUrl: String? = null
     ) {
         private var lastPongId = -1L
+        private val senderScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+        private val pendingLogs = Channel<String>(Channel.UNLIMITED)
+        private val isDisconnected = AtomicBoolean(false)
         val isActive get() = session.isActive
 
         suspend fun init() {
@@ -182,6 +188,9 @@ object DevPlugin {
 
         suspend fun WebSocketSession.handle() {
             emitState(State(State.CONNECTED))
+            senderScope.launch {
+                consumeLogs()
+            }
             withContext(Dispatchers.IO) {
                 launch {
                     mapToData(
@@ -279,10 +288,10 @@ object DevPlugin {
                 if (lastPongId != ping.data) {
                     Log.d(TAG, "ping: $lastPongId != ${ping.data}")
                     if (session.isActive) {
-                        coroutineScope {
-                            launch {
-                                reconnect()
-                            }
+                        if (serverUrl != null) {
+                            reconnect()
+                        } else {
+                            emitDisconnect(session, SocketTimeoutException("pong timeout"))
                         }
                     }
                     break
@@ -352,15 +361,27 @@ object DevPlugin {
             }
         }
 
-        fun log(log: String) {
-            if (!session.isActive) return
-            val data = Message(
-                type = "log",
-                data = LogData(log = log)
-            )
-            runBlocking {
-                session.send(gson.toJson(data))
+        private suspend fun consumeLogs() {
+            try {
+                for (log in pendingLogs) {
+                    if (!session.isActive) {
+                        emitDisconnect(session)
+                        break
+                    }
+                    val data = Message(
+                        type = "log",
+                        data = LogData(log = log)
+                    )
+                    session.send(gson.toJson(data))
+                }
+            } catch (e: Throwable) {
+                emitDisconnect(session, e)
             }
+        }
+
+        fun log(log: String) {
+            if (!session.isActive || isDisconnected.get()) return
+            pendingLogs.trySend(log)
         }
 
         suspend fun close(
@@ -412,9 +433,17 @@ object DevPlugin {
         }
 
         private suspend fun emitDisconnect(session: WebSocketSession?, e: Throwable? = null) {
-            emitState(State(State.DISCONNECTED, e))
-            session?.close()
-            session?.cancel()
+            if (!isDisconnected.compareAndSet(false, true)) return
+            pendingLogs.close()
+            withContext(NonCancellable) {
+                if (connection === this@Connection) {
+                    connection = null
+                    _connectState.emit(State(State.DISCONNECTED, e))
+                }
+                kotlin.runCatching { session?.close() }
+                session?.cancel()
+                senderScope.cancel()
+            }
         }
 
         private suspend fun WebSocketSession.handleSession(

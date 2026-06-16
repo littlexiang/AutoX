@@ -67,7 +67,7 @@ dependencies {
     api("net.lingala.zip4j:zip4j:1.3.2")
     api("com.afollestad.material-dialogs:core:0.9.2.3")
     implementation(libs.material)
-    api("com.github.hyb1996:EnhancedFloaty:0.31")
+    api(project(":enhancedfloaty"))
     api("com.makeramen:roundedimageview:2.3.0")
     // OkHttp
     api(libs.okhttp)
@@ -83,7 +83,7 @@ dependencies {
     implementation(libs.opencv)
     // libs
     implementation(libs.byte.buddy.android)
-    implementation("cz.adaptech:tesseract4android:4.1.1")
+    implementation("com.rmtheis:tess-two:9.1.0")
     implementation(libs.bundles.mlkit)
     implementation("com.microsoft.onnxruntime:onnxruntime-android:1.22.0")
 }

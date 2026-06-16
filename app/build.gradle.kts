@@ -16,6 +16,11 @@ java {
     }
 }
 
+val includeTemplateAssets =
+    providers.gradleProperty("includeTemplateAssets").orNull?.toBooleanStrictOrNull() ?: false
+val includeCodeEditorAssets =
+    providers.gradleProperty("includeCodeEditorAssets").orNull?.toBooleanStrictOrNull() ?: false
+
 android {
     namespace = "org.autojs.autoxjs"
     compileSdk = versions.compile
@@ -111,29 +116,28 @@ android {
             manifestPlaceholders.putAll(mapOf("appName" to "@string/app_name"))
         }
         create("v7") {
-            applicationIdSuffix = ".v7"
+            applicationIdSuffix = ".v7.superx"
             versionCode = versions.devVersionCode
             versionName = versions.devVersionName
             buildConfigField("String", "CHANNEL", "\"v7\"")
-            manifestPlaceholders.putAll(mapOf("appName" to "Autox.js v7"))
+            resValue("string", "app_name", "Autox.js v7s")
+            manifestPlaceholders.putAll(mapOf("appName" to "@string/app_name"))
         }
         create("v7_mini") {
-            applicationIdSuffix = ".v7"
+            applicationIdSuffix = ".v7.superx"
             buildConfigField("String", "CHANNEL", "\"v7\"")
-            manifestPlaceholders.putAll(mapOf("appName" to "Autox.js v7"))
+            resValue("string", "app_name", "Autox.js v7s")
+            manifestPlaceholders.putAll(mapOf("appName" to "@string/app_name"))
         }
     }
     applicationVariants.all {
-        val variant = this
-        if (variant.flavorName == "v7_mini") {
-            mergeAssetsProvider.configure {
-                doLast {
-                    delete(
-                        fileTree(outputDir) {
-                            include(
-                                "codeeditor/**/*", "template.apk"
-                            )
-                        })
+        mergeAssetsProvider.configure {
+            doLast {
+                if (!includeCodeEditorAssets) {
+                    delete(fileTree(outputDir) { include("codeeditor/**/*") })
+                }
+                if (!includeTemplateAssets) {
+                    delete(fileTree(outputDir) { include("template.apk") })
                 }
             }
         }
@@ -186,20 +190,21 @@ dependencies {
     // Android supports
     implementation(libs.preference.ktx)
     implementation(libs.appcompat) //
+    implementation(libs.material)
 
     implementation(libs.compose.material3)
     implementation(libs.compose.material3.window.size)
     implementation(libs.compose.material3.adaptive.navigation.suite)
     // Personal libraries  Deprecated!!
-    implementation("com.github.hyb1996:MutableTheme:1.0.0")
+    implementation(project(":mutabletheme"))
     // Material Dialogs  Deprecated!!
     implementation("com.afollestad.material-dialogs:core:0.9.2.3")
     // Common Markdown
-    implementation("com.github.atlassian:commonmark-java:commonmark-parent-0.9.0")
-    // Android issue reporter (a github issue reporter)
-    implementation("com.heinrichreimersoftware:android-issue-reporter:1.3.1")
+    implementation("com.atlassian.commonmark:commonmark:0.13.0")
+    implementation("com.atlassian.commonmark:commonmark-ext-heading-anchor:0.13.0")
+    implementation("org.eclipse.mylyn.github:org.eclipse.egit.github.core:2.1.5")
     //MultiLevelListView
-    implementation("com.github.hyb1996:android-multi-level-listview:1.1")
+    implementation(project(":multi-level-listview"))
     //Licenses Dialog  Deprecated!!
     implementation("de.psdev.licensesdialog:licensesdialog:2.2.0")
     //Expandable RecyclerView
@@ -258,7 +263,7 @@ dependencies {
 }
 
 fun copyTemplateToAPP(isDebug: Boolean, to: File) {
-    val outName = if (isDebug) "template-debug" else "template-release"
+    val outName = if (isDebug) "common-debug" else "common-release"
     val outFile = project(":inrt").buildOutputs.named(outName).get().outputFile
 //    logger.error("buildTemplate from: $outFile")
     copy {
@@ -271,20 +276,21 @@ fun copyTemplateToAPP(isDebug: Boolean, to: File) {
 }
 
 val assetsDir = File(projectDir, "src/main/assets")
-if (!File(assetsDir, "template.apk").isFile) {
+
+if (includeTemplateAssets && !File(assetsDir, "template.apk").isFile) {
     tasks.named("preBuild").dependsOn("buildTemplateApp")
 }
 
 tasks.register("buildTemplateApp") {
     group = "build"
-    dependsOn(":inrt:assembleTemplateRelease")
+    dependsOn(":inrt:assembleCommonRelease")
     doFirst {
         copyTemplateToAPP(false, assetsDir)
     }
 }
 tasks.register("buildDebugTemplateApp") {
     group = "build"
-    dependsOn(":inrt:assembleTemplateDebug")
+    dependsOn(":inrt:assembleCommonDebug")
     doFirst {
         copyTemplateToAPP(true, assetsDir)
     }

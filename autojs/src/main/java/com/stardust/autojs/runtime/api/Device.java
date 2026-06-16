@@ -9,6 +9,7 @@ import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
 import android.media.AudioManager;
+import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
@@ -36,8 +37,6 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Collections;
 import java.util.List;
-
-import ezy.assist.compat.SettingsCompat;
 
 /**
  * Created by Stardust on 2017/12/2.
@@ -283,10 +282,15 @@ public class Device {
 
 
     private void checkWriteSettingsPermission() {
-        if (SettingsCompat.canWriteSettings(mContext)) {
+        if (Settings.System.canWrite(mContext)) {
             return;
         }
-        SettingsCompat.manageWriteSettings(mContext);
+        Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS)
+                .setData(Uri.parse("package:" + mContext.getPackageName()))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (intent.resolveActivity(mContext.getPackageManager()) != null) {
+            mContext.startActivity(intent);
+        }
         throw new SecurityException(mContext.getString(R.string.no_write_settings_permissin));
     }
 

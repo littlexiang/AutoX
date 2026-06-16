@@ -3,6 +3,20 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
 }
+
+val buildTemplateShellRequested = gradle.startParameter.taskNames.any { taskName ->
+    taskName == "buildTemplateApp" ||
+        taskName.endsWith(":buildTemplateApp") ||
+        taskName == "buildDebugTemplateApp" ||
+        taskName.endsWith(":buildDebugTemplateApp")
+}
+
+val templateShellAbiFilters = if (buildTemplateShellRequested) {
+    listOf("arm64-v8a")
+} else {
+    listOf("armeabi-v7a", "arm64-v8a")
+}
+
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(versions.javaVersionInt))
@@ -67,7 +81,7 @@ android {
         create("common") {
             buildConfigField("boolean", "isMarket", "false")
             manifestPlaceholders.putAll(mapOf("appName" to "inrt"))
-            ndk.abiFilters.addAll(listOf("armeabi-v7a", "arm64-v8a"))
+            ndk.abiFilters.addAll(templateShellAbiFilters)
         }
         create("template") {
             manifestPlaceholders.putAll(mapOf("appName" to "template"))
@@ -142,7 +156,6 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.ktx)
     androidTestImplementation(libs.espresso.core)
     implementation("com.dhh:websocket2:2.1.4")
-    implementation("com.github.SenhLinsh:Utils-Everywhere:3.0.0")
     testImplementation(libs.junit)
     implementation(project(":automator"))
     implementation(project(":common"))

@@ -15,8 +15,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ProgressBar;
 
-import com.linsh.utilseverywhere.ContextUtils;
-
 import org.autojs.autoxjs.inrt.R;
 import com.stardust.util.IntentUtil;
 
@@ -249,7 +247,7 @@ public class UpdateUtil {
         intent.setAction(Intent.ACTION_VIEW);
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-         String AUTHORITY =   ContextUtils.getPackageName()+ ".fileprovider";
+         String AUTHORITY =   mContext.getPackageName() + ".fileprovider";
 
         IntentUtil.installApkOrToast(mContext, apkfile.getPath(),AUTHORITY);
     }

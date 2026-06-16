@@ -40,7 +40,7 @@ android {
 
 dependencies {
     implementation(libs.commons.exec)
-    api(libs.timscriptov.apksigner)
+    api(project(":apksigner-lib"))
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("lib*.so"))))
     implementation(libs.okhttp)
     androidTestImplementation(libs.androidx.test.ext.junit)

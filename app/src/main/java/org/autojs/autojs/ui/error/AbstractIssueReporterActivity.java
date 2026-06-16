@@ -27,7 +27,6 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.widget.Toolbar;
 
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.github.aakira.expandablelayout.ExpandableRelativeLayout;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputLayout;
 import com.heinrichreimersoftware.androidissuereporter.model.DeviceInfo;
@@ -83,14 +82,14 @@ public abstract class AbstractIssueReporterActivity extends BaseActivity {
     private EditText inputDescription;
     private TextView textDeviceInfo;
     private ImageButton buttonDeviceInfo;
-    private ExpandableRelativeLayout layoutDeviceInfo;
-    private ExpandableRelativeLayout layoutAnonymous;
+    private View layoutDeviceInfo;
+    private View layoutAnonymous;
     private EditText inputUsername;
     private EditText inputPassword;
     private EditText inputEmail;
     private RadioButton optionUseAccount;
     private RadioButton optionAnonymous;
-    private ExpandableRelativeLayout layoutLogin;
+    private View layoutLogin;
     private FloatingActionButton buttonSend;
 
     private Drawable optionUseAccountButtonDrawable = null;
@@ -172,7 +171,7 @@ public abstract class AbstractIssueReporterActivity extends BaseActivity {
 
         toolbar.setNavigationOnClickListener(v -> finish());
 
-        buttonDeviceInfo.setOnClickListener(v -> layoutDeviceInfo.toggle());
+        buttonDeviceInfo.setOnClickListener(v -> toggleVisibility(layoutDeviceInfo));
 
 
         inputPassword.setOnEditorActionListener((textView, actionId, event) -> {
@@ -216,19 +215,33 @@ public abstract class AbstractIssueReporterActivity extends BaseActivity {
             setOptionUseAccountMarginStart(0);
             optionUseAccount.setEnabled(true);
             optionUseAccount.setOnClickListener(v -> {
-                layoutLogin.expand();
-                layoutAnonymous.collapse();
+                setExpanded(layoutLogin, true);
+                setExpanded(layoutAnonymous, false);
                 inputUsername.setEnabled(true);
                 inputPassword.setEnabled(true);
             });
             optionAnonymous.setVisibility(View.VISIBLE);
             optionAnonymous.setOnClickListener(v -> {
-                layoutLogin.collapse();
-                layoutAnonymous.expand();
+                setExpanded(layoutLogin, false);
+                setExpanded(layoutAnonymous, true);
                 inputUsername.setEnabled(false);
                 inputPassword.setEnabled(false);
             });
         }
+    }
+
+    private void toggleVisibility(View view) {
+        if (view == null) {
+            return;
+        }
+        setExpanded(view, view.getVisibility() != View.VISIBLE);
+    }
+
+    private void setExpanded(View view, boolean expanded) {
+        if (view == null) {
+            return;
+        }
+        view.setVisibility(expanded ? View.VISIBLE : View.GONE);
     }
 
     private void reportIssue() {

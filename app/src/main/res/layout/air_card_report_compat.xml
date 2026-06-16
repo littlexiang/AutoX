@@ -97,13 +97,12 @@
 
         </LinearLayout>
 
-        <com.github.aakira.expandablelayout.ExpandableRelativeLayout
+        <LinearLayout
             android:id="@+id/air_layoutDeviceInfo"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:ael_expanded="false"
-            app:ael_interpolator="fastOutSlowIn"
-            app:ael_orientation="vertical">
+            android:orientation="vertical"
+            android:visibility="gone">
 
             <androidx.appcompat.widget.AppCompatTextView
                 android:id="@+id/air_textDeviceInfo"
@@ -113,7 +112,7 @@
                 android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                 android:textColor="?android:textColorSecondary"/>
 
-        </com.github.aakira.expandablelayout.ExpandableRelativeLayout>
+        </LinearLayout>
 
     </LinearLayout>
 

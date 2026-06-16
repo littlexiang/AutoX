@@ -124,7 +124,6 @@ test-rules = "androidx.test:rules:1.6.1"
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-ext-junit" }
 espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espresso-core" }
 
-timscriptov-apksigner = "com.github.TimScriptov:apksigner:1.2.0"
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil-compose-version" }
 #Deprecated ========================================
 #Glide
