@@ -81,7 +81,10 @@ class App : Application(), Configuration.Provider {
                 WebView.setDataDirectorySuffix(getString(R.string.text_script_process_name))
             };
         } else if (ProcessUtils.isMainProcess(this)) {
-            initResource()
+            val appVersionChange = initResource()
+            if (appVersionChange) {
+                applyStartupOptionDefaultsOnUpgrade()
+            }
             if (Pref.isUsbDebugEnabled()) {
                 UsbDebugService.start(this)
             }
@@ -113,7 +116,7 @@ class App : Application(), Configuration.Provider {
         changeLanguage(l)
     }
 
-    private fun initResource() {
+    private fun initResource(): Boolean {
         val appVersionChange =
             Pref.def().getInt(getString(R.string.key_init_resource), 0) != BuildConfig.VERSION_CODE
         Thread {
@@ -124,6 +127,16 @@ class App : Application(), Configuration.Provider {
                 }
             }
         }.start()
+        return appVersionChange
+    }
+
+    private fun applyStartupOptionDefaultsOnUpgrade() {
+        Pref.def().edit {
+            putBoolean(getString(R.string.key_stable_mode), true)
+            putBoolean(PrefKey.KEY_FOREGROUND_SERVICE, true)
+        }
+        Pref.setFloatingMenuShown(true)
+        Pref.setUsbDebugEnabled(true)
     }
 
     @SuppressLint("CheckResult")
