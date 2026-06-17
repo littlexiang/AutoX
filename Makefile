@@ -12,7 +12,7 @@ APK_DIR ?= app/build/outputs/apk/v7/release
 ABI ?= arm64-v8a
 
 SIGNED_DIR ?= build/signed
-KEYSTORE_DIR ?= build/keystore
+KEYSTORE_DIR ?= signing
 KEYSTORE_FILE ?= $(KEYSTORE_DIR)/autox-self.jks
 KEYSTORE_PASS ?= 12345678
 KEY_ALIAS ?= autox
@@ -47,7 +47,7 @@ help:
 	@echo "Useful overrides:"
 	@echo "  GRADLE_TASK=:app:assembleV7Release"
 	@echo "  APK_DIR=app/build/outputs/apk/v7/release"
-	@echo "  KEYSTORE_FILE=build/keystore/custom.jks"
+	@echo "  KEYSTORE_FILE=signing/custom.jks"
 	@echo "  KEYSTORE_PASS=... KEY_ALIAS=... KEY_PASS=..."
 	@echo "  ABI=arm64-v8a"
 
