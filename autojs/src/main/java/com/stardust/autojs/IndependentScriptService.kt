@@ -169,35 +169,44 @@ class IndependentScriptService : AbstractAutoService() {
             "action_disable_remote_control_keep_alive"
 
         fun startForeground(context: Context) {
-            ContextCompat.startForegroundService(
-                context,
-                Intent(context, IndependentScriptService::class.java).apply {
-                    action = ACTION_START_FOREGROUND
-                }
-            )
+            startServiceCompat(context, Intent(context, IndependentScriptService::class.java).apply {
+                action = ACTION_START_FOREGROUND
+            })
         }
 
         fun stopForeground(context: Context) {
-            context.startService(Intent(context, IndependentScriptService::class.java).apply {
+            startServiceCompat(context, Intent(context, IndependentScriptService::class.java).apply {
                 action = ACTION_STOP_FOREGROUND
             })
         }
 
         fun enableRemoteControlKeepAlive(context: Context) {
             Pref.setRemoteControlKeepAliveEnabled(true)
-            ContextCompat.startForegroundService(
-                context,
-                Intent(context, IndependentScriptService::class.java).apply {
-                    action = ACTION_ENABLE_REMOTE_CONTROL_KEEP_ALIVE
-                }
-            )
+            startServiceCompat(context, Intent(context, IndependentScriptService::class.java).apply {
+                action = ACTION_ENABLE_REMOTE_CONTROL_KEEP_ALIVE
+            })
         }
 
         fun disableRemoteControlKeepAlive(context: Context) {
             Pref.setRemoteControlKeepAliveEnabled(false)
-            context.startService(Intent(context, IndependentScriptService::class.java).apply {
+            startServiceCompat(context, Intent(context, IndependentScriptService::class.java).apply {
                 action = ACTION_DISABLE_REMOTE_CONTROL_KEEP_ALIVE
             })
+        }
+
+        private fun startServiceCompat(context: Context, intent: Intent) {
+            try {
+                context.startService(intent)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to start service with startService, trying startForegroundService", e)
+                try {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        ContextCompat.startForegroundService(context, intent)
+                    }
+                } catch (e2: Exception) {
+                    Log.e(TAG, "All service start attempts failed", e2)
+                }
+            }
         }
     }
 }
