@@ -22,4 +22,8 @@ open class ActivityEventDelegate(private val v8Callback: EventLoopQueue.V8Callba
     open fun emit(event: ActivityEvent, vararg args: Any?) {
         v8Callback?.invoke(event.value, *args)
     }
+
+    open fun close() {
+        v8Callback?.close()
+    }
 }

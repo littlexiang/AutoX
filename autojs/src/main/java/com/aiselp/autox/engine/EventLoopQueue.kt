@@ -131,6 +131,9 @@ class EventLoopQueue(val runtime: NodeRuntime) {
         }
 
         override fun close() {
+            if (removerd) {
+                return
+            }
             removerd = true
             addTask {
                 util.invokeVoid("removeCallback", id)

@@ -55,7 +55,11 @@ class JavaInteractor(
         val v8Callback = promiseFactory.eventLoopQueue.createV8Callback(fn)
         scope.launch {
             delay(2000)
-            v8Callback.invoke()
+            try {
+                v8Callback.invoke()
+            } finally {
+                v8Callback.close()
+            }
         }
     }
 

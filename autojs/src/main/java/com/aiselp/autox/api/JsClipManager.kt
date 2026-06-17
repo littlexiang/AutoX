@@ -33,6 +33,10 @@ class JsClipManager(context: Context, private val eventLoopQueue: EventLoopQueue
 
     @V8Function
     fun registerListener(listener: V8ValueObject) {
+        clipboard.removePrimaryClipChangedListener(this.listener)
+        if (::jsListener.isInitialized) {
+            jsListener.close()
+        }
         jsListener = listener.get("onClipChanged")
         clipboard.addPrimaryClipChangedListener(this.listener)
     }

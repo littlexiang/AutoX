@@ -7,9 +7,11 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.google.gson.JsonPrimitive
 import com.stardust.app.GlobalAppContext
+import com.stardust.autojs.IndependentScriptService
 import com.stardust.autojs.core.console.LogEntry
 import com.stardust.autojs.servicecomponents.BinderConsoleListener
 import com.stardust.autojs.servicecomponents.EngineController
+import com.stardust.autojs.servicecomponents.ScriptServiceConnection
 import io.ktor.websocket.CloseReason
 import io.ktor.websocket.Frame
 import io.ktor.websocket.FrameType
@@ -190,6 +192,7 @@ object DevPlugin {
 
         suspend fun WebSocketSession.handle() {
             emitState(State(State.CONNECTED))
+            keepScriptProcessAlive(true)
             senderScope.launch {
                 consumeLogs()
             }
@@ -440,6 +443,7 @@ object DevPlugin {
             withContext(NonCancellable) {
                 if (connection === this@Connection) {
                     connection = null
+                    keepScriptProcessAlive(false)
                     _connectState.emit(State(State.DISCONNECTED, e))
                 }
                 kotlin.runCatching { session?.close() }
@@ -479,4 +483,19 @@ object DevPlugin {
     }
 
     suspend fun emitState(state: State) = _connectState.emit(state)
+
+    private fun keepScriptProcessAlive(enabled: Boolean) {
+        val context = GlobalAppContext.get()
+        kotlin.runCatching {
+            if (enabled) {
+                ScriptServiceConnection.GlobalConnection.bind(context)
+                IndependentScriptService.enableRemoteControlKeepAlive(context)
+            } else {
+                ScriptServiceConnection.GlobalConnection.unbind(context)
+                IndependentScriptService.disableRemoteControlKeepAlive(context)
+            }
+        }.onFailure {
+            Log.e(TAG, "Failed to update script keep-alive state: enabled=$enabled", it)
+        }
+    }
 }

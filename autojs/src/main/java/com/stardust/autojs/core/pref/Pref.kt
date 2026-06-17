@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import androidx.preference.PreferenceManager
 import com.stardust.app.GlobalAppContext.get
 import com.stardust.autojs.core.pref.PrefKey.KEY_FOREGROUND_SERVICE
+import com.stardust.autojs.core.pref.PrefKey.KEY_REMOTE_CONTROL_KEEP_ALIVE
 
 object Pref {
     private var inr: SharedPreferences? = null
@@ -27,6 +28,20 @@ object Pref {
             return preferences.getBoolean(KEY_FOREGROUND_SERVICE, false)
         }
 
+    val isRemoteControlKeepAliveEnabled: Boolean
+        get() {
+            return preferences.getBoolean(KEY_REMOTE_CONTROL_KEEP_ALIVE, false)
+        }
+
+    val shouldKeepScriptProcessAlive: Boolean
+        get() {
+            return isForegroundServiceEnabled || isRemoteControlKeepAliveEnabled
+        }
+
+    fun setRemoteControlKeepAliveEnabled(enabled: Boolean) {
+        preferences.edit().putBoolean(KEY_REMOTE_CONTROL_KEEP_ALIVE, enabled).apply()
+    }
+
     fun getDefault(context: Context): SharedPreferences {
         return PreferenceManager.getDefaultSharedPreferences(context)
     }
@@ -41,6 +56,7 @@ object PrefKey {
     const val KEY_GESTURE_OBSERVING = "key_gesture_observing"
     const val KEY_AUTO_BACKUP = "key_auto_backup"
     const val KEY_FOREGROUND_SERVICE = "key_foreground_service"
+    const val KEY_REMOTE_CONTROL_KEEP_ALIVE = "key_remote_control_keep_alive"
     const val KEY_USB_DEBUG = "key_usb_debug"
     const val KEY_USE_VOLUME_CONTROL_RECORD = "key_use_volume_control_record"
     const val KEY_LANGUAGE = "key_language"

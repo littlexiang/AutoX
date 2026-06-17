@@ -24,10 +24,13 @@ class JsEngines(private val engine: NodeScriptEngine) : NativeApi {
     }
 
     override fun recycle(v8Runtime: V8Runtime, global: V8ValueObject) {
+        emitCallback?.close()
+        emitCallback = null
     }
 
     @V8Function
     fun setupJs(ops: V8ValueObject) {
+        emitCallback?.close()
         emitCallback = ops.get(EMIT_FUNCTION)
     }
 

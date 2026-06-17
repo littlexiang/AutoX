@@ -114,9 +114,11 @@ public class Sensors extends EventEmitter {
     }
 
     private SensorEventEmitter register(@NonNull Sensor sensor, int delay) {
-        mScriptRuntime.loopers.addAsyncTask(mAsyncTask);
         SensorEventEmitter emitter = new SensorEventEmitter(mScriptBridges);
-        mSensorManager.registerListener(emitter, sensor, delay);
+        if (!mSensorManager.registerListener(emitter, sensor, delay)) {
+            return null;
+        }
+        mScriptRuntime.loopers.addAsyncTask(mAsyncTask);
         synchronized (mSensorEventEmitters) {
             mSensorEventEmitters.add(emitter);
         }

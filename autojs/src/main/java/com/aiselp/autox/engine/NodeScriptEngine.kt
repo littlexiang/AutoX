@@ -239,8 +239,8 @@ class NodeScriptEngine(val context: Context) :
     }
 
     override fun destroy() {
-        if (scope.isActive) scope.cancel()
         val code = if (scope.isActive) 0 else 1
+        if (scope.isActive) scope.cancel()
         try {
             runtime.getExecutor("process.emit('exit',$code);").executeVoid()
         } catch (e: Throwable) {

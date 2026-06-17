@@ -13,6 +13,7 @@ import android.os.Process
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
+import androidx.core.content.ContextCompat
 import com.github.aiselp.autox.api.TermuxApi
 import com.stardust.app.service.AbstractAutoService
 import com.stardust.autojs.core.pref.Pref
@@ -23,12 +24,15 @@ import kotlinx.coroutines.cancel
 
 class IndependentScriptService : AbstractAutoService() {
     val scope: CoroutineScope = CoroutineScope(Dispatchers.Default)
+    @Volatile
+    private var stoppedExplicitly = false
 
     override fun onCreate() {
         super.onCreate()
+        stoppedExplicitly = false
         Log.i(TAG, "onCreate")
         Log.i(TAG, "Pid: ${Process.myPid()}")
-        if (Pref.isForegroundServiceEnabled) {
+        if (Pref.shouldKeepScriptProcessAlive) {
             startForeground()
         }
     }
@@ -89,16 +93,55 @@ class IndependentScriptService : AbstractAutoService() {
         }
         val action = intent?.action
         when (action) {
-            ACTION_START_FOREGROUND -> startForeground()
-            ACTION_STOP_FOREGROUND -> stopServiceInternal()
+            ACTION_START_FOREGROUND -> {
+                stoppedExplicitly = false
+                startForeground()
+            }
+
+            ACTION_ENABLE_REMOTE_CONTROL_KEEP_ALIVE -> {
+                stoppedExplicitly = false
+                Pref.setRemoteControlKeepAliveEnabled(true)
+                startForeground()
+            }
+
+            ACTION_STOP_FOREGROUND -> {
+                if (Pref.shouldKeepScriptProcessAlive) {
+                    stoppedExplicitly = false
+                    startForeground()
+                } else {
+                    stoppedExplicitly = true
+                    stopServiceInternal()
+                    return START_NOT_STICKY
+                }
+            }
+
+            ACTION_DISABLE_REMOTE_CONTROL_KEEP_ALIVE -> {
+                Pref.setRemoteControlKeepAliveEnabled(false)
+                if (Pref.shouldKeepScriptProcessAlive) {
+                    stoppedExplicitly = false
+                    startForeground()
+                } else {
+                    stoppedExplicitly = true
+                    stopServiceInternal()
+                    return START_NOT_STICKY
+                }
+            }
         }
-        return super.onStartCommand(intent, flags, startId)
+        return if (Pref.shouldKeepScriptProcessAlive) START_STICKY else START_NOT_STICKY
+    }
+
+    override fun onTaskRemoved(rootIntent: Intent?) {
+        super.onTaskRemoved(rootIntent)
+        if (Pref.shouldKeepScriptProcessAlive && !stoppedExplicitly) {
+            Log.w(TAG, "Task removed, restarting keep-alive script service")
+            startForeground(applicationContext)
+        }
     }
 
     override fun onDestroy() {
         scope.cancel()
-        super.onDestroy()
         Log.i(TAG, "IndependentScriptService Service destroyed")
+        super.onDestroy()
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
@@ -120,19 +163,44 @@ class IndependentScriptService : AbstractAutoService() {
         private val CHANEL_ID = IndependentScriptService::class.java.name + "_foreground"
         const val ACTION_START_FOREGROUND = "action_start_foreground"
         const val ACTION_STOP_FOREGROUND = "action_stop_foreground"
+        const val ACTION_ENABLE_REMOTE_CONTROL_KEEP_ALIVE =
+            "action_enable_remote_control_keep_alive"
+        const val ACTION_DISABLE_REMOTE_CONTROL_KEEP_ALIVE =
+            "action_disable_remote_control_keep_alive"
 
         fun startForeground(context: Context) {
-            val intent = Intent(context, IndependentScriptService::class.java).apply {
-                action = ACTION_START_FOREGROUND
-            }
-            context.startForegroundService(intent)
+            ContextCompat.startForegroundService(
+                context,
+                Intent(context, IndependentScriptService::class.java).apply {
+                    action = ACTION_START_FOREGROUND
+                }
+            )
         }
 
         fun stopForeground(context: Context) {
-            val intent = Intent(context, IndependentScriptService::class.java).apply {
+            ContextCompat.startForegroundService(Intent(context, IndependentScriptService::class.java).apply {
                 action = ACTION_STOP_FOREGROUND
-            }
-            context.startService(intent)
+            })
+        }
+
+        fun enableRemoteControlKeepAlive(context: Context) {
+            Pref.setRemoteControlKeepAliveEnabled(true)
+            ContextCompat.startForegroundService(
+                context,
+                Intent(context, IndependentScriptService::class.java).apply {
+                    action = ACTION_ENABLE_REMOTE_CONTROL_KEEP_ALIVE
+                }
+            )
+        }
+
+        fun disableRemoteControlKeepAlive(context: Context) {
+            Pref.setRemoteControlKeepAliveEnabled(false)
+            ContextCompat.startForegroundService(
+                context,
+                Intent(context, IndependentScriptService::class.java).apply {
+                    action = ACTION_DISABLE_REMOTE_CONTROL_KEEP_ALIVE
+                }
+            )
         }
     }
 }

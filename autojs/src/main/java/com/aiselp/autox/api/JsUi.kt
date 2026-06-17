@@ -105,6 +105,7 @@ class JsUi(nodeScriptEngine: NodeScriptEngine) : NativeApi {
         val promiseAdapter = promiseFactory.newPromiseAdapter()
         val activityEventDelegate = createActivityEventDelegate(listener)
         val builder = ScriptActivityBuilder(element, activityEventDelegate)
+        val task = Any()
         val l = object : VueUiScriptActivity.Lifecycle {
             override fun onCreate(activity: VueUiScriptActivity) {
                 activitys.add(activity)
@@ -113,10 +114,10 @@ class JsUi(nodeScriptEngine: NodeScriptEngine) : NativeApi {
 
             override fun onDestroy(activity: VueUiScriptActivity) {
                 activitys.remove(activity)
-                eventLoopQueue.cancelPersistentTask(this)
+                eventLoopQueue.cancelPersistentTask(task)
             }
         }
-        eventLoopQueue.createPersistentTask(l)
+        eventLoopQueue.createPersistentTask(task)
         VueUiScriptActivity.startActivity(context, builder, l)
         return promiseAdapter.promise
     }

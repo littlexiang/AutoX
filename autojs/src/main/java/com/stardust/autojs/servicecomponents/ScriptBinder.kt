@@ -11,6 +11,7 @@ import android.util.Log
 import com.stardust.app.service.AbstractAutoService.Companion.stopAllServices
 import com.stardust.autojs.AutoJs
 import com.stardust.autojs.IndependentScriptService
+import com.stardust.autojs.core.pref.Pref
 import com.stardust.autojs.core.shizuku.ShizukuClient
 import com.stardust.autojs.execution.ExecutionConfig
 import com.stardust.autojs.script.ScriptFile
@@ -48,6 +49,7 @@ class ScriptBinder(service: IndependentScriptService, val scope: CoroutineScope)
         }
 
     private fun appExit() {
+        Pref.setRemoteControlKeepAliveEnabled(false)
         stopAllScript()
         stopAllServices()
         //todo 应用退出的其它处理可在此添加

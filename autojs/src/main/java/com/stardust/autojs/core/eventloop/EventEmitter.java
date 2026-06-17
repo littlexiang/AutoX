@@ -87,7 +87,7 @@ public class EventEmitter implements IEventEmitter {
             while (listenerIterator.hasNext()) {
                 ListenerWrapper l = listenerIterator.next();
                 if (l.listener == listener) {
-                    listenerIterator.remove();
+                    mListenerWrappers.remove(l);
                     break;
                 }
             }

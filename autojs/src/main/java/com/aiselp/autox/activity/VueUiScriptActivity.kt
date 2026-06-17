@@ -19,7 +19,7 @@ class VueUiScriptActivity : AppCompatActivity() {
         val id = intent.getIntExtra(TAG, 0)
         life = contextListener[id]
         contextListener.remove(id)
-        val builder = builderList[id] ?: return this.finish()
+        val builder = builderList.remove(id) ?: return this.finish()
         activityEventDelegate = builder.activityEventDelegate
         setContent {
             BackHandler {
@@ -66,6 +66,8 @@ class VueUiScriptActivity : AppCompatActivity() {
         super.onDestroy()
         life?.onDestroy(this)
         activityEventDelegate?.emit(ActivityEvent.ON_DESTROY)
+        activityEventDelegate?.close()
+        activityEventDelegate = null
     }
 
     @Deprecated("Deprecated in Java")

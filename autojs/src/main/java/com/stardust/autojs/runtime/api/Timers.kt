@@ -69,6 +69,7 @@ class Timers(private val mRuntime: ScriptRuntime) {
     }
 
     fun recycle() {
+        uiTimer.removeAllCallbacks()
         mainTimer.removeAllCallbacks()
     }
 

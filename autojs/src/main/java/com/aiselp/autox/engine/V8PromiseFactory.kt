@@ -46,17 +46,24 @@ class V8PromiseFactory(val runtime: V8Runtime, val eventLoopQueue: EventLoopQueu
             super.reject(arg)
             eventLoopQueue.cancelPersistentTask(task)
         }
+
+        override fun close() {
+            eventLoopQueue.cancelPersistentTask(task)
+            super.close()
+        }
     }
 
     open class PromiseAdapter(
         private val adapter: V8ValueObject,
         private val eventLoopQueue: EventLoopQueue
     ) : AutoCloseable {
-        val promise: V8ValuePromise
-            get() = adapter.get("promise")
+        val promise: V8ValuePromise = adapter.get("promise")
 
         @Volatile
         private var promiseStatus = PENDING
+
+        @Volatile
+        private var closed = false
 
         open fun resolve(arg: Any?) {
             if (promiseStatus != PENDING) {
@@ -89,7 +96,12 @@ class V8PromiseFactory(val runtime: V8Runtime, val eventLoopQueue: EventLoopQueu
         }
 
         override fun close() {
+            if (closed) {
+                return
+            }
+            closed = true
             promise.close()
+            adapter.close()
         }
     }
 }

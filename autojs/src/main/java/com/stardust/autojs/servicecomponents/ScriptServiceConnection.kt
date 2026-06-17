@@ -63,11 +63,37 @@ class ScriptServiceConnection : ServiceConnection {
 
     override fun onServiceDisconnected(name: ComponentName?) {
         isConnected = false
+        service = null
         binding = null
         binderConsoleListener.logPublish.onNext(
             LogEntry(
                 level = Log.ERROR,
                 content = "Script service disconnected"
+            )
+        )
+    }
+
+    override fun onBindingDied(name: ComponentName?) {
+        isConnected = false
+        service = null
+        binding = null
+        binderConsoleListener.logPublish.onNext(
+            LogEntry(
+                level = Log.ERROR,
+                content = "Script service binding died"
+            )
+        )
+        application?.let(::bind)
+    }
+
+    override fun onNullBinding(name: ComponentName?) {
+        isConnected = false
+        service = null
+        binding = null
+        binderConsoleListener.logPublish.onNext(
+            LogEntry(
+                level = Log.ERROR,
+                content = "Script service returned null binding"
             )
         )
     }
@@ -171,15 +197,31 @@ class ScriptServiceConnection : ServiceConnection {
     }
 
     fun bind(context: Context) {
-        if (isConnected) return
+        if (isConnected || binding != null) return
         application = context.applicationContext
-        context.applicationContext.bindService(
+        binding = Job()
+        val isBound = context.applicationContext.bindService(
             Intent(context, IndependentScriptService::class.java),
             this,
-            Context.BIND_AUTO_CREATE
+            Context.BIND_AUTO_CREATE or Context.BIND_IMPORTANT
         )
-        binding = Job()
+        if (!isBound) {
+            binding?.cancel()
+            binding = null
+            throw IllegalStateException("Failed to bind IndependentScriptService")
+        }
+    }
 
+    fun unbind(context: Context) {
+        if (!isConnected && binding == null) return
+        try {
+            context.applicationContext.unbindService(this)
+        } catch (e: IllegalArgumentException) {
+            Log.w(TAG, "Failed to unbind service: service not bound", e)
+        }
+        binding = null
+        isConnected = false
+        service = null
     }
 
     companion object {
