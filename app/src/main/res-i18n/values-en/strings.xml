@@ -134,6 +134,12 @@
   <string name="text_again_and_again_again">Double again</string>
   <string name="text_again_and_again_again_again">Double again</string>
   <string name="text_connect_computer">Connect computer</string>
+  <string name="text_script_service_status">Script service: %1$s</string>
+  <string name="text_status_normal">Normal</string>
+  <string name="text_status_connecting">Connecting</string>
+  <string name="text_status_disconnected">Disconnected</string>
+  <string name="text_status_binding_died">Binding died</string>
+  <string name="text_status_null_binding">Null binding</string>
   <string name="regist">Connect to the app store</string>
   <string name="text_server_address">Server address</string>
   <string name="text_server_address_error">Wrong link address</string>

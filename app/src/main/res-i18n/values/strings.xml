@@ -155,6 +155,12 @@
     <string name="text_again_and_again_again">又双叒</string>
     <string name="text_again_and_again_again_again">又双叒叕</string>
     <string name="text_connect_computer">连接电脑</string>
+    <string name="text_script_service_status">脚本服务：%1$s</string>
+    <string name="text_status_normal">正常</string>
+    <string name="text_status_connecting">连接中</string>
+    <string name="text_status_disconnected">已断开</string>
+    <string name="text_status_binding_died">绑定失效</string>
+    <string name="text_status_null_binding">空绑定</string>
     <string name="regist">连接到应用商店</string>
     <string name="text_server_address">服务器地址</string>
     <string name="text_server_address_error">链接地址错误</string>

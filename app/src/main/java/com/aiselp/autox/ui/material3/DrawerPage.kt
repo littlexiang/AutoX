@@ -38,6 +38,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -484,6 +485,23 @@ private fun ConnectComputerSwitch() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var enable by remember { mutableStateOf(DevPlugin.isActive) }
+    val scriptServiceState by ScriptServiceConnection.GlobalConnection.serviceState.collectAsState()
+    val scriptServiceStatusText = stringResource(
+        id = when (scriptServiceState) {
+            ScriptServiceConnection.ServiceState.CONNECTED -> R.string.text_status_normal
+            ScriptServiceConnection.ServiceState.CONNECTING -> R.string.text_status_connecting
+            ScriptServiceConnection.ServiceState.BINDING_DIED -> R.string.text_status_binding_died
+            ScriptServiceConnection.ServiceState.NULL_BINDING -> R.string.text_status_null_binding
+            ScriptServiceConnection.ServiceState.DISCONNECTED -> R.string.text_status_disconnected
+        }
+    )
+    val scriptServiceStatusColor = when (scriptServiceState) {
+        ScriptServiceConnection.ServiceState.CONNECTED -> Color(0xFF008A38)
+        ScriptServiceConnection.ServiceState.CONNECTING -> Color(0xFFB26A00)
+        ScriptServiceConnection.ServiceState.BINDING_DIED,
+        ScriptServiceConnection.ServiceState.NULL_BINDING,
+        ScriptServiceConnection.ServiceState.DISCONNECTED -> Color(0xFFC62828)
+    }
 
 
     val scanCodeLauncher =
@@ -529,23 +547,34 @@ private fun ConnectComputerSwitch() {
             }
         }
     }
-    SettingOptionSwitch(
-        icon = {
-            Icon(painterResource(id = R.drawable.ic_debug), null, tint = Color(0xFF008A38))
-        },
-        title = stringResource(
-            id = if (!enable) R.string.text_connect_computer
-            else R.string.text_connected_to_computer
-        ),
-        checked = enable,
-        onCheckedChange = {
-            scope.launch {
-                if (it) {
-                    dialog.show()
-                } else DevPlugin.close()
+    Column {
+        SettingOptionSwitch(
+            icon = {
+                Icon(painterResource(id = R.drawable.ic_debug), null, tint = Color(0xFF008A38))
+            },
+            title = stringResource(
+                id = if (!enable) R.string.text_connect_computer
+                else R.string.text_connected_to_computer
+            ),
+            checked = enable,
+            onCheckedChange = {
+                scope.launch {
+                    if (it) {
+                        dialog.show()
+                    } else DevPlugin.close()
+                }
             }
-        }
-    )
+        )
+        Text(
+            text = stringResource(
+                R.string.text_script_service_status,
+                scriptServiceStatusText
+            ),
+            color = scriptServiceStatusColor,
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(start = 29.dp, top = 4.dp)
+        )
+    }
 
 }
 

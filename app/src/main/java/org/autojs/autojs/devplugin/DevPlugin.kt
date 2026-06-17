@@ -68,6 +68,7 @@ object DevPlugin {
     private const val TYPE_CLOSE = "close"
     private const val TYPE_BYTES_COMMAND = "bytes_command"
     private const val maxRetry = 3
+    private const val KEEP_ALIVE_REASON_REMOTE_DEBUG = "devplugin_connection"
 
     private val _connectState = MutableSharedFlow<State>()
     private val client by lazy { WebSocketClient() }
@@ -489,10 +490,16 @@ object DevPlugin {
         kotlin.runCatching {
             if (enabled) {
                 ScriptServiceConnection.GlobalConnection.bind(context)
-                IndependentScriptService.enableRemoteControlKeepAlive(context)
+                IndependentScriptService.enableRemoteControlKeepAlive(
+                    context,
+                    KEEP_ALIVE_REASON_REMOTE_DEBUG
+                )
             } else {
                 ScriptServiceConnection.GlobalConnection.unbind(context)
-                IndependentScriptService.disableRemoteControlKeepAlive(context)
+                IndependentScriptService.disableRemoteControlKeepAlive(
+                    context,
+                    KEEP_ALIVE_REASON_REMOTE_DEBUG
+                )
             }
         }.onFailure {
             Log.e(TAG, "Failed to update script keep-alive state: enabled=$enabled", it)

@@ -20,15 +20,26 @@ import kotlinx.coroutines.CompletableJob
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 
 class ScriptServiceConnection : ServiceConnection {
+    enum class ServiceState {
+        DISCONNECTED,
+        CONNECTING,
+        CONNECTED,
+        BINDING_DIED,
+        NULL_BINDING
+    }
+
     val binderConsoleListener = BinderConsoleListener.ClientInterface()
     var binding: CompletableJob? = null
     var service: IBinder? = null
     var application: Context? = null
     private val connected = Job()
+    private val _serviceState = MutableStateFlow(ServiceState.DISCONNECTED)
     val consoleImpl: ConsoleImpl =
         object : ConsoleImpl(UiHandler(GlobalAppContext.get())), BinderConsoleListener {
             override fun onPrintln(log: LogEntry) {
@@ -38,16 +49,21 @@ class ScriptServiceConnection : ServiceConnection {
             binderConsoleListener.logPublish
                 .observeOn(AndroidSchedulers.mainThread()).subscribe(::onPrintln)
         }
+    val serviceState = _serviceState.asStateFlow()
 
 
     @Volatile
     var isConnected = false
         private set
 
+    val isServiceHealthy: Boolean
+        get() = _serviceState.value == ServiceState.CONNECTED
+
     @OptIn(DelicateCoroutinesApi::class)
     override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
         this.service = service
         isConnected = true
+        _serviceState.value = ServiceState.CONNECTED
         binding?.complete()
         connected.complete()
         binderConsoleListener.logPublish.onNext(
@@ -65,6 +81,7 @@ class ScriptServiceConnection : ServiceConnection {
         isConnected = false
         service = null
         binding = null
+        _serviceState.value = ServiceState.DISCONNECTED
         binderConsoleListener.logPublish.onNext(
             LogEntry(
                 level = Log.ERROR,
@@ -77,6 +94,7 @@ class ScriptServiceConnection : ServiceConnection {
         isConnected = false
         service = null
         binding = null
+        _serviceState.value = ServiceState.BINDING_DIED
         binderConsoleListener.logPublish.onNext(
             LogEntry(
                 level = Log.ERROR,
@@ -90,6 +108,7 @@ class ScriptServiceConnection : ServiceConnection {
         isConnected = false
         service = null
         binding = null
+        _serviceState.value = ServiceState.NULL_BINDING
         binderConsoleListener.logPublish.onNext(
             LogEntry(
                 level = Log.ERROR,
@@ -200,6 +219,7 @@ class ScriptServiceConnection : ServiceConnection {
         if (isConnected || binding != null) return
         application = context.applicationContext
         binding = Job()
+        _serviceState.value = ServiceState.CONNECTING
         val isBound = context.applicationContext.bindService(
             Intent(context, IndependentScriptService::class.java),
             this,
@@ -208,6 +228,7 @@ class ScriptServiceConnection : ServiceConnection {
         if (!isBound) {
             binding?.cancel()
             binding = null
+            _serviceState.value = ServiceState.DISCONNECTED
             throw IllegalStateException("Failed to bind IndependentScriptService")
         }
     }
@@ -222,6 +243,7 @@ class ScriptServiceConnection : ServiceConnection {
         binding = null
         isConnected = false
         service = null
+        _serviceState.value = ServiceState.DISCONNECTED
     }
 
     companion object {

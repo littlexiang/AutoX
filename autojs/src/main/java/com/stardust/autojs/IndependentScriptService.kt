@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import com.github.aiselp.autox.api.TermuxApi
 import com.stardust.app.service.AbstractAutoService
 import com.stardust.autojs.core.pref.Pref
+import com.stardust.autojs.core.pref.REMOTE_CONTROL_KEEP_ALIVE_REASON_LEGACY
 import com.stardust.autojs.servicecomponents.ScriptBinder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -100,7 +101,7 @@ class IndependentScriptService : AbstractAutoService() {
 
             ACTION_ENABLE_REMOTE_CONTROL_KEEP_ALIVE -> {
                 stoppedExplicitly = false
-                Pref.setRemoteControlKeepAliveEnabled(true)
+                Pref.acquireRemoteControlKeepAlive(intent.keepAliveReason())
                 startForeground()
             }
 
@@ -116,7 +117,7 @@ class IndependentScriptService : AbstractAutoService() {
             }
 
             ACTION_DISABLE_REMOTE_CONTROL_KEEP_ALIVE -> {
-                Pref.setRemoteControlKeepAliveEnabled(false)
+                Pref.releaseRemoteControlKeepAlive(intent.keepAliveReason())
                 if (Pref.shouldKeepScriptProcessAlive) {
                     stoppedExplicitly = false
                     startForeground()
@@ -167,6 +168,7 @@ class IndependentScriptService : AbstractAutoService() {
             "action_enable_remote_control_keep_alive"
         const val ACTION_DISABLE_REMOTE_CONTROL_KEEP_ALIVE =
             "action_disable_remote_control_keep_alive"
+        private const val EXTRA_KEEP_ALIVE_REASON = "extra_keep_alive_reason"
 
         fun startForeground(context: Context) {
             startServiceCompat(context, Intent(context, IndependentScriptService::class.java).apply {
@@ -180,17 +182,25 @@ class IndependentScriptService : AbstractAutoService() {
             })
         }
 
-        fun enableRemoteControlKeepAlive(context: Context) {
-            Pref.setRemoteControlKeepAliveEnabled(true)
+        fun enableRemoteControlKeepAlive(
+            context: Context,
+            reason: String = REMOTE_CONTROL_KEEP_ALIVE_REASON_LEGACY
+        ) {
+            Pref.acquireRemoteControlKeepAlive(reason)
             startServiceCompat(context, Intent(context, IndependentScriptService::class.java).apply {
                 action = ACTION_ENABLE_REMOTE_CONTROL_KEEP_ALIVE
+                putExtra(EXTRA_KEEP_ALIVE_REASON, reason)
             })
         }
 
-        fun disableRemoteControlKeepAlive(context: Context) {
-            Pref.setRemoteControlKeepAliveEnabled(false)
+        fun disableRemoteControlKeepAlive(
+            context: Context,
+            reason: String = REMOTE_CONTROL_KEEP_ALIVE_REASON_LEGACY
+        ) {
+            Pref.releaseRemoteControlKeepAlive(reason)
             startServiceCompat(context, Intent(context, IndependentScriptService::class.java).apply {
                 action = ACTION_DISABLE_REMOTE_CONTROL_KEEP_ALIVE
+                putExtra(EXTRA_KEEP_ALIVE_REASON, reason)
             })
         }
 
@@ -208,5 +218,10 @@ class IndependentScriptService : AbstractAutoService() {
                 }
             }
         }
+    }
+
+    private fun Intent?.keepAliveReason(): String {
+        return this?.getStringExtra(EXTRA_KEEP_ALIVE_REASON)
+            ?: REMOTE_CONTROL_KEEP_ALIVE_REASON_LEGACY
     }
 }

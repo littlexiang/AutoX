@@ -49,7 +49,7 @@ class ScriptBinder(service: IndependentScriptService, val scope: CoroutineScope)
         }
 
     private fun appExit() {
-        Pref.setRemoteControlKeepAliveEnabled(false)
+        Pref.clearRemoteControlKeepAliveReasons()
         stopAllScript()
         stopAllServices()
         //todo 应用退出的其它处理可在此添加

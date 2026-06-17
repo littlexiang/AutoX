@@ -6,11 +6,14 @@ import androidx.preference.PreferenceManager
 import com.stardust.app.GlobalAppContext.get
 import com.stardust.autojs.core.pref.PrefKey.KEY_FOREGROUND_SERVICE
 import com.stardust.autojs.core.pref.PrefKey.KEY_REMOTE_CONTROL_KEEP_ALIVE
+import com.stardust.autojs.core.pref.PrefKey.KEY_REMOTE_CONTROL_KEEP_ALIVE_REASONS
 
 object Pref {
     private var inr: SharedPreferences? = null
     private val preferences: SharedPreferences
         get() = inr ?: PreferenceManager.getDefaultSharedPreferences(get())
+
+    private val keepAliveLock = Any()
 
 
     val isStableModeEnabled: Boolean
@@ -30,7 +33,12 @@ object Pref {
 
     val isRemoteControlKeepAliveEnabled: Boolean
         get() {
-            return preferences.getBoolean(KEY_REMOTE_CONTROL_KEEP_ALIVE, false)
+            return synchronized(keepAliveLock) {
+                preferences.getBoolean(KEY_REMOTE_CONTROL_KEEP_ALIVE, false) ||
+                    preferences.getStringSet(KEY_REMOTE_CONTROL_KEEP_ALIVE_REASONS, emptySet())
+                        .orEmpty()
+                        .isNotEmpty()
+            }
         }
 
     val shouldKeepScriptProcessAlive: Boolean
@@ -39,7 +47,61 @@ object Pref {
         }
 
     fun setRemoteControlKeepAliveEnabled(enabled: Boolean) {
-        preferences.edit().putBoolean(KEY_REMOTE_CONTROL_KEEP_ALIVE, enabled).apply()
+        synchronized(keepAliveLock) {
+            val reasons = mutableSetOf<String>()
+            if (enabled) {
+                reasons += REMOTE_CONTROL_KEEP_ALIVE_REASON_LEGACY
+            }
+            preferences.edit()
+                .putBoolean(KEY_REMOTE_CONTROL_KEEP_ALIVE, enabled)
+                .putStringSet(KEY_REMOTE_CONTROL_KEEP_ALIVE_REASONS, reasons)
+                .apply()
+        }
+    }
+
+    fun acquireRemoteControlKeepAlive(reason: String) {
+        synchronized(keepAliveLock) {
+            val reasons = getRemoteControlKeepAliveReasonsLocked().toMutableSet()
+            reasons += reason
+            writeRemoteControlKeepAliveReasonsLocked(reasons)
+        }
+    }
+
+    fun releaseRemoteControlKeepAlive(reason: String) {
+        synchronized(keepAliveLock) {
+            val reasons = getRemoteControlKeepAliveReasonsLocked().toMutableSet()
+            reasons -= reason
+            writeRemoteControlKeepAliveReasonsLocked(reasons)
+        }
+    }
+
+    fun clearRemoteControlKeepAliveReasons() {
+        synchronized(keepAliveLock) {
+            writeRemoteControlKeepAliveReasonsLocked(emptySet())
+        }
+    }
+
+    fun getRemoteControlKeepAliveReasons(): Set<String> {
+        return synchronized(keepAliveLock) {
+            getRemoteControlKeepAliveReasonsLocked()
+        }
+    }
+
+    private fun getRemoteControlKeepAliveReasonsLocked(): Set<String> {
+        val reasons =
+            preferences.getStringSet(KEY_REMOTE_CONTROL_KEEP_ALIVE_REASONS, null)?.toMutableSet()
+                ?: mutableSetOf()
+        if (preferences.getBoolean(KEY_REMOTE_CONTROL_KEEP_ALIVE, false)) {
+            reasons += REMOTE_CONTROL_KEEP_ALIVE_REASON_LEGACY
+        }
+        return reasons
+    }
+
+    private fun writeRemoteControlKeepAliveReasonsLocked(reasons: Set<String>) {
+        preferences.edit()
+            .putBoolean(KEY_REMOTE_CONTROL_KEEP_ALIVE, reasons.isNotEmpty())
+            .putStringSet(KEY_REMOTE_CONTROL_KEEP_ALIVE_REASONS, reasons.toSet())
+            .apply()
     }
 
     fun getDefault(context: Context): SharedPreferences {
@@ -57,7 +119,10 @@ object PrefKey {
     const val KEY_AUTO_BACKUP = "key_auto_backup"
     const val KEY_FOREGROUND_SERVICE = "key_foreground_service"
     const val KEY_REMOTE_CONTROL_KEEP_ALIVE = "key_remote_control_keep_alive"
+    const val KEY_REMOTE_CONTROL_KEEP_ALIVE_REASONS = "key_remote_control_keep_alive_reasons"
     const val KEY_USB_DEBUG = "key_usb_debug"
     const val KEY_USE_VOLUME_CONTROL_RECORD = "key_use_volume_control_record"
     const val KEY_LANGUAGE = "key_language"
 }
+
+const val REMOTE_CONTROL_KEEP_ALIVE_REASON_LEGACY = "legacy"
