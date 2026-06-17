@@ -155,6 +155,9 @@ android {
     }
 
     packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
         //ktor netty implementation("io.ktor:ktor-server-netty:2.0.1")
         resources.pickFirsts.addAll(
             listOf(

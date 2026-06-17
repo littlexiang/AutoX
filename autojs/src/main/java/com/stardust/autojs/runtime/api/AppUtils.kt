@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.stardust.autojs.runtime.api
 
 import android.app.Activity

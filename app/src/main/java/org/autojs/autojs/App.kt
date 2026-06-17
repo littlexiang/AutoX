@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package org.autojs.autojs
 
 import android.annotation.SuppressLint

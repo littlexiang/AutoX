@@ -1,0 +1,3 @@
+<resources>
+    <string name="text_required_background_start">Requires background popup interface permission</string>
+</resources>

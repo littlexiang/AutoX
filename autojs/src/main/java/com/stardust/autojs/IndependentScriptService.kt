@@ -178,7 +178,7 @@ class IndependentScriptService : AbstractAutoService() {
         }
 
         fun stopForeground(context: Context) {
-            ContextCompat.startForegroundService(Intent(context, IndependentScriptService::class.java).apply {
+            context.startService(Intent(context, IndependentScriptService::class.java).apply {
                 action = ACTION_STOP_FOREGROUND
             })
         }
@@ -195,12 +195,9 @@ class IndependentScriptService : AbstractAutoService() {
 
         fun disableRemoteControlKeepAlive(context: Context) {
             Pref.setRemoteControlKeepAliveEnabled(false)
-            ContextCompat.startForegroundService(
-                context,
-                Intent(context, IndependentScriptService::class.java).apply {
-                    action = ACTION_DISABLE_REMOTE_CONTROL_KEEP_ALIVE
-                }
-            )
+            context.startService(Intent(context, IndependentScriptService::class.java).apply {
+                action = ACTION_DISABLE_REMOTE_CONTROL_KEEP_ALIVE
+            })
         }
     }
 }

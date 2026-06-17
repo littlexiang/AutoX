@@ -264,7 +264,6 @@ private fun StableModeSwitch() {
 
 @Composable
 fun ShizukuPermissionSwitch() {
-    val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
     val enabled = ShizukuClient.instance.available && ShizukuClient.instance.userPermission
@@ -726,7 +725,6 @@ private fun Feedback() {
 @Composable
 private fun CheckForUpdate(model: DrawerViewModel = viewModel()) {
     val scope = rememberCoroutineScope()
-    val context = LocalContext.current
     val dialog = remember { DialogController() }
     var enabled by rememberSaveable { mutableStateOf(true) }
 
@@ -817,10 +815,6 @@ fun PublishNotificationSwitch() {
     }
     val activityResultLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            enabled.value = NotificationManagerCompat.from(context).areNotificationsEnabled()
-        }
-    val launcherForActivityResult =
-        rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
             enabled.value = NotificationManagerCompat.from(context).areNotificationsEnabled()
         }
 

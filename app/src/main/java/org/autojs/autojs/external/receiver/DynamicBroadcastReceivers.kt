@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package org.autojs.autojs.external.receiver
 
 import android.content.Context
