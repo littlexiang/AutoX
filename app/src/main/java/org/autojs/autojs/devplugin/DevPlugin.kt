@@ -67,6 +67,7 @@ object DevPlugin {
     private const val TYPE_PONG = "pong"
     private const val TYPE_CLOSE = "close"
     private const val TYPE_BYTES_COMMAND = "bytes_command"
+    private const val TYPE_ACK = "ack"
     private const val maxRetry = 3
     private const val KEEP_ALIVE_REASON_REMOTE_DEBUG = "devplugin_connection"
 
@@ -263,6 +264,16 @@ object DevPlugin {
                             handleBytes(obj, it)
                         } ?: kotlin.run {
                             requiredBytesCommands[md5] = obj
+                        }
+                    }
+
+                    TYPE_ACK -> {
+                        val data = obj["data"]?.asJsonObject
+                        if (data != null) {
+                            val seq = data["seq"]?.asInt ?: 0
+                            val event = data["event"]?.asString ?: ""
+                            val taskNo = data["taskNo"]?.asString ?: ""
+                            com.stardust.autojs.DeviceMessageBus.putAck(seq, event, taskNo)
                         }
                     }
 
