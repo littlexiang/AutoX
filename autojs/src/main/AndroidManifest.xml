@@ -71,6 +71,7 @@
 
         <service
             android:name=".IndependentScriptService"
+            android:exported="false"
             android:foregroundServiceType="mediaPlayback"
             android:process="@string/text_script_process_name" />
         <service

@@ -225,19 +225,37 @@ class ScriptServiceConnection : ServiceConnection {
 
     fun bind(context: Context) {
         if (isConnected || binding != null) return
-        application = context.applicationContext
+        val appContext = context.applicationContext
+        application = appContext
         binding = Job()
         _serviceState.value = ServiceState.CONNECTING
-        val isBound = context.applicationContext.bindService(
-            Intent(context, IndependentScriptService::class.java),
+        val serviceIntent = Intent(appContext, IndependentScriptService::class.java)
+
+        // Some Android 14/15 devices are more reliable if the remote-process service is
+        // explicitly started before we bind to it.
+        IndependentScriptService.ensureStarted(appContext)
+
+        var isBound = appContext.bindService(
+            serviceIntent,
             this,
             Context.BIND_AUTO_CREATE or Context.BIND_IMPORTANT
         )
         if (!isBound) {
+            Log.w(TAG, "Initial bind failed, retrying IndependentScriptService bind")
+            IndependentScriptService.ensureStarted(appContext)
+            isBound = appContext.bindService(
+                serviceIntent,
+                this,
+                Context.BIND_AUTO_CREATE or Context.BIND_IMPORTANT
+            )
+        }
+        if (!isBound) {
             binding?.cancel()
             binding = null
             _serviceState.value = ServiceState.DISCONNECTED
-            throw IllegalStateException("Failed to bind IndependentScriptService")
+            throw IllegalStateException(
+                "Failed to bind IndependentScriptService for package=${appContext.packageName}"
+            )
         }
     }
 

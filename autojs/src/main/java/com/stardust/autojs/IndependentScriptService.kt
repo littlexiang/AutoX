@@ -176,6 +176,10 @@ class IndependentScriptService : AbstractAutoService() {
             })
         }
 
+        fun ensureStarted(context: Context) {
+            startServiceCompat(context, Intent(context, IndependentScriptService::class.java))
+        }
+
         fun stopForeground(context: Context) {
             startServiceCompat(context, Intent(context, IndependentScriptService::class.java).apply {
                 action = ACTION_STOP_FOREGROUND
