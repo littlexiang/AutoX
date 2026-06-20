@@ -31,10 +31,13 @@ class ScriptEngineService internal constructor(builder: ScriptEngineServiceBuild
     private val mContext: Context = mUiHandler.context
     val globalConsole: Console = builder.mGlobalConsole
     private val mScriptEngineManager: ScriptEngineManager = builder.mScriptEngineManager
+    private val executionLock = Any()
     private val mEngineLifecycleObserver: EngineLifecycleObserver =
         object : EngineLifecycleObserver() {
             override fun onEngineRemove(engine: ScriptEngine<*>?) {
-                mScriptExecutions.remove(engine!!.id)
+                synchronized(executionLock) {
+                    mScriptExecutions.remove(engine!!.id)
+                }
                 super.onEngineRemove(engine)
             }
         }
@@ -85,9 +88,19 @@ class ScriptEngineService internal constructor(builder: ScriptEngineServiceBuild
     }
 
     fun execute(task: ScriptExecutionTask): ScriptExecution {
-        val execution = executeInternal(task)
-        mScriptExecutions[execution.id] = execution
-        return execution
+        synchronized(executionLock) {
+            val runningCount = mScriptEngineManager.engines.size
+            if (runningCount > 0) {
+                Log.i(
+                    LOG_TAG,
+                    "Global single-script mode: stopping $runningCount running script(s) before starting ${task.source}"
+                )
+            }
+            stopAll()
+            val execution = executeInternal(task)
+            mScriptExecutions[execution.id] = execution
+            return execution
+        }
     }
 
     fun createScriptExecution(task: ScriptExecutionTask): ScriptExecution {
@@ -137,7 +150,9 @@ class ScriptEngineService internal constructor(builder: ScriptEngineServiceBuild
     }
 
     fun stopAll(): Int {
-        return mScriptEngineManager.stopAll()
+        synchronized(executionLock) {
+            return mScriptEngineManager.stopAll()
+        }
     }
 
     fun stopAllAndToast() {
@@ -150,12 +165,14 @@ class ScriptEngineService internal constructor(builder: ScriptEngineServiceBuild
     val engines: Set<ScriptEngine<*>>
         get() = mScriptEngineManager.engines
     val scriptExecutions: Collection<ScriptExecution>
-        get() = mScriptExecutions.values
+        get() = synchronized(executionLock) { mScriptExecutions.values.toList() }
 
     fun getScriptExecution(id: Int): ScriptExecution? {
-        return if (id == ScriptExecution.NO_ID) {
-            null
-        } else mScriptExecutions[id]
+        return synchronized(executionLock) {
+            if (id == ScriptExecution.NO_ID) {
+                null
+            } else mScriptExecutions[id]
+        }
     }
 
     private open class EngineLifecycleObserver : EngineLifecycleCallback {
