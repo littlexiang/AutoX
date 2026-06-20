@@ -273,7 +273,13 @@ object DevPlugin {
                             val seq = data["seq"]?.asInt ?: 0
                             val event = data["event"]?.asString ?: ""
                             val taskNo = data["taskNo"]?.asString ?: ""
-                            com.stardust.autojs.DeviceMessageBus.putAck(seq, event, taskNo)
+                            senderScope.launch {
+                                try {
+                                    ScriptServiceConnection.GlobalConnection.sendAck(seq, event, taskNo)
+                                } catch (_: Exception) {
+                                    // best-effort: ACK delivery may fail if script process is not alive
+                                }
+                            }
                         }
                     }
 

@@ -202,6 +202,14 @@ class ScriptServiceConnection : ServiceConnection {
         send()
     }
 
+    suspend fun sendAck(seq: Int, event: String, taskNo: String) = sendBinder {
+        action = ScriptBinder.Action.PUT_ACK.id
+        data.writeInt(seq)
+        data.writeString(event)
+        data.writeString(taskNo)
+        send()
+    }
+
     suspend fun awaitConnected() = withTimeout(3000) {
         if (isConnected) return@withTimeout
         if (binding == null) {

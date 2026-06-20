@@ -42,6 +42,7 @@ class ScriptBinder(service: IndependentScriptService, val scope: CoroutineScope)
 
                 Action.BIND_SHIZUKU_SERVICE.id -> bindShizukuUserService()
                 Action.GET_MEMORY_INFO.id -> getMemoryInfo(reply!!)
+                Action.PUT_ACK.id -> putAck(data)
                 else -> Log.w(TAG, "unknown action id = $code")
             }
             Log.d(TAG, "action id = $code, complete")
@@ -134,6 +135,13 @@ class ScriptBinder(service: IndependentScriptService, val scope: CoroutineScope)
         memoryInfo.writeToParcel(reply, Parcelable.PARCELABLE_WRITE_RETURN_VALUE)
     }
 
+    private fun putAck(data: Parcel) {
+        val seq = data.readInt()
+        val event = data.readString() ?: ""
+        val taskNo = data.readString() ?: ""
+        com.stardust.autojs.DeviceMessageBus.putAck(seq, event, taskNo)
+    }
+
     enum class Action(val id: Int) {
         START(1),
         STOP(2),
@@ -146,6 +154,7 @@ class ScriptBinder(service: IndependentScriptService, val scope: CoroutineScope)
         NOTIFICATION_LISTENER_SERVICE_STATUS(9),
         BIND_SHIZUKU_SERVICE(10),
         GET_MEMORY_INFO(11),
+        PUT_ACK(12),
         APP_EXIT(99);
     }
 
