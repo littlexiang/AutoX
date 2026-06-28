@@ -32,6 +32,7 @@ import org.autojs.autojs.external.receiver.DynamicBroadcastReceivers
 import org.autojs.autojs.theme.ThemeColorManagerCompat
 import org.autojs.autojs.timing.TimedTaskManager
 import org.autojs.autojs.timing.TimedTaskScheduler
+import org.autojs.autojs.ui.floating.FloatyWindowManger
 import org.autojs.autojs.ui.main.MainActivity
 import org.autojs.autoxjs.BuildConfig
 import org.autojs.autoxjs.R
@@ -77,6 +78,7 @@ class App : Application(), Configuration.Provider {
             if (Pref.isRunningVolumeControlEnabled()) {
                 GlobalKeyObserver.init()
             }
+            FloatyWindowManger.restoreCircularMenuIfNeeded()
             TimedTaskScheduler.init(this)
             initDynamicBroadcastReceivers()
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {

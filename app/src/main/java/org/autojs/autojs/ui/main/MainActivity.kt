@@ -82,11 +82,7 @@ class MainActivity : AppCompatActivity() {
             IndependentScriptService.stopForeground(this)
         }
 
-        if (Pref.isFloatingMenuShown()) {
-            if (!FloatyWindowManger.showCircularMenu()) Pref.setFloatingMenuShown(false)
-        } else {
-            FloatyWindowManger.hideCircularMenu()
-        }
+        FloatyWindowManger.restoreCircularMenuIfNeeded()
 
         setContent {
             val scope = rememberCoroutineScope()
@@ -259,5 +255,4 @@ private fun getBottomItems(context: Context) = mutableStateListOf(
         context.getString(R.string.text_document)
     )
 )
-
 

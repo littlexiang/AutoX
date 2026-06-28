@@ -45,6 +45,16 @@ object FloatyWindowManger {
         return true
     }
 
+    fun restoreCircularMenuIfNeeded() {
+        if (org.autojs.autojs.Pref.isFloatingMenuShown()) {
+            if (!showCircularMenu()) {
+                org.autojs.autojs.Pref.setFloatingMenuShown(false)
+            }
+        } else {
+            hideCircularMenu()
+        }
+    }
+
     fun hideCircularMenu() {
         val context = GlobalAppContext.get()
         context.startService(Intent(context, FloatyAutoService::class.java).apply {
