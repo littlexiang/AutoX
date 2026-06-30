@@ -18,6 +18,7 @@ import io.ktor.server.routing.routing
 import io.ktor.server.websocket.DefaultWebSocketServerSession
 import io.ktor.server.websocket.WebSockets
 import io.ktor.server.websocket.webSocket
+import io.ktor.websocket.WebSocketDeflateExtension
 
 class WebSocketServer {
 
@@ -44,6 +45,11 @@ class WebSocketServer {
                 timeoutMillis = this@WebSocketServer.timeoutMillis
                 maxFrameSize = Long.MAX_VALUE
                 masking = false
+                extensions {
+                    install(WebSocketDeflateExtension) {
+                        compressIfBiggerThan(1024)
+                    }
+                }
             }
             routing {
                 installRoute()
@@ -97,6 +103,11 @@ class WebSocketClient {
             install(io.ktor.client.plugins.websocket.WebSockets) {
                 this.pingInterval = this@WebSocketClient.pingInterval
                 maxFrameSize = Long.MAX_VALUE
+                extensions {
+                    install(WebSocketDeflateExtension) {
+                        compressIfBiggerThan(1024)
+                    }
+                }
             }
         }
         client!!.webSocket(

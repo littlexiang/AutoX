@@ -19,7 +19,6 @@ import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import io.ktor.websocket.readBytes
 import io.ktor.websocket.readText
-import io.ktor.websocket.send
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -33,6 +32,8 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okio.ByteString.Companion.toByteString
 import org.autojs.autojs.devplugin.message.Hello
@@ -68,8 +69,12 @@ object DevPlugin {
     private const val TYPE_CLOSE = "close"
     private const val TYPE_BYTES_COMMAND = "bytes_command"
     private const val TYPE_ACK = "ack"
+    private const val TYPE_LOG = "log"
     private const val maxRetry = 3
     private const val KEEP_ALIVE_REASON_REMOTE_DEBUG = "devplugin_connection"
+    private const val PING_INTERVAL_MILLIS = 5000L
+    private const val PING_MAX_MISSES = 2
+    private const val PING_BUSY_GRACE_MILLIS = 8000L
 
     private val _connectState = MutableSharedFlow<State>()
     private val client by lazy { WebSocketClient() }
@@ -176,7 +181,11 @@ object DevPlugin {
         private val session: WebSocketSession,
         private var serverUrl: String? = null
     ) {
+        @Volatile
         private var lastPongId = -1L
+        @Volatile
+        private var lastFrameReceivedAt = System.currentTimeMillis()
+        private val sendMutex = Mutex()
         private val senderScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
         private val pendingLogs = Channel<String>(Channel.UNLIMITED)
         private val isDisconnected = AtomicBoolean(false)
@@ -222,7 +231,7 @@ object DevPlugin {
                     appVersionCode = BuildConfig.VERSION_CODE
                 )
             )
-            send(gson.toJson(message))
+            sendText(gson.toJson(message))
             val frame = incoming.receive()
             serveHello(
                 frame = frame,
@@ -300,22 +309,31 @@ object DevPlugin {
 
 
         private suspend fun ping() {
-            while (true) {
+            var missedPongs = 0
+            while (session.isActive && !isDisconnected.get()) {
                 Log.d(TAG, "ping")
+                val pingId = System.currentTimeMillis()
                 val ping = Message(
                     type = TYPE_PING,
-                    data = System.currentTimeMillis()
+                    data = pingId
                 )
-                session.send(Frame.Text(gson.toJson(ping)))
-                delay(10000)
-                if (lastPongId != ping.data) {
-                    Log.d(TAG, "ping: $lastPongId != ${ping.data}")
+                sendText(gson.toJson(ping))
+                delay(PING_INTERVAL_MILLIS)
+                if (lastPongId == pingId) {
+                    missedPongs = 0
+                    continue
+                }
+                val now = System.currentTimeMillis()
+                if (now - lastFrameReceivedAt < PING_BUSY_GRACE_MILLIS) {
+                    Log.d(TAG, "ping delayed by active traffic: $lastPongId != $pingId")
+                    missedPongs = 0
+                    continue
+                }
+                missedPongs++
+                Log.d(TAG, "ping miss $missedPongs/$PING_MAX_MISSES: $lastPongId != $pingId")
+                if (missedPongs >= PING_MAX_MISSES) {
                     if (session.isActive) {
-                        if (serverUrl != null) {
-                            reconnect()
-                        } else {
-                            emitDisconnect(session, SocketTimeoutException("pong timeout"))
-                        }
+                        disconnectAfterPingTimeout()
                     }
                     break
                 }
@@ -391,11 +409,7 @@ object DevPlugin {
                         emitDisconnect(session)
                         break
                     }
-                    val data = Message(
-                        type = "log",
-                        data = LogData(log = log)
-                    )
-                    session.send(gson.toJson(data))
+                    sendLogFrame(log)
                 }
             } catch (e: Throwable) {
                 emitDisconnect(session, e)
@@ -404,7 +418,10 @@ object DevPlugin {
 
         fun log(log: String) {
             if (!session.isActive || isDisconnected.get()) return
-            pendingLogs.trySend(log)
+            val result = pendingLogs.trySend(log)
+            if (result.isFailure && !isDisconnected.get()) {
+                Log.w(TAG, "Failed to queue log for websocket", result.exceptionOrNull())
+            }
         }
 
         suspend fun close(
@@ -424,11 +441,13 @@ object DevPlugin {
                 onMessage = { frame ->
                     when (frame.frameType) {
                         FrameType.TEXT -> {
+                            lastFrameReceivedAt = System.currentTimeMillis()
                             val text = (frame as Frame.Text).readText()
                             JsonUtil.dispatchJson(text)?.let { onJson(it) }
                         }
 
                         FrameType.BINARY -> {
+                            lastFrameReceivedAt = System.currentTimeMillis()
                             val bytes = frame.readBytes()
                             val md5 = bytes.toByteString(0, bytes.size).md5().hex()
                             onBytes(Bytes(md5, bytes))
@@ -491,6 +510,30 @@ object DevPlugin {
 
         suspend fun emitState(state: State) {
             if (connection === this) _connectState.emit(state)
+        }
+
+        private suspend fun sendLogFrame(log: String) {
+            val data = Message(
+                type = TYPE_LOG,
+                data = LogData(log = log)
+            )
+            sendText(gson.toJson(data))
+        }
+
+        private suspend fun sendText(text: String) {
+            sendMutex.withLock {
+                if (session.isActive && !isDisconnected.get()) {
+                    session.send(Frame.Text(text))
+                }
+            }
+        }
+
+        private suspend fun disconnectAfterPingTimeout() {
+            if (serverUrl != null) {
+                reconnect()
+            } else {
+                emitDisconnect(session, SocketTimeoutException("pong timeout"))
+            }
         }
     }
 
